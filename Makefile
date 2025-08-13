@@ -43,7 +43,7 @@ ${TARGET}:${OBJ_O}
 $(shell mkdir -p $(DIR_BIN))
 
 ${DIR_BIN}/%.o:$(DIR_Examples)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_GUI) -I $(DIR_Draw)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_GUI)
     
 ${DIR_BIN}/%.o:$(DIR_Driver)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) $(DEBUG)
@@ -59,6 +59,10 @@ ${DIR_BIN}/%.o:$(DIR_GUI)/%.c
 	
 ${DIR_BIN}/%.o:$(DIR_Config)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ $(LIB)
+
+${DIR_BIN}/%.o:$(DIR_Draw)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_Draw) -I $(DIR_Config) -I $(DIR_GUI) -I $(DIR_EPD) -I $(DIR_Driver)
+
 
 	
 clean :

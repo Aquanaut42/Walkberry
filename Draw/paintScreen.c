@@ -11,7 +11,7 @@
 #include <DEV_Config.h>
 #include <fonts.h>
 
-PAINT PaintScreen;
+PAINTSCREEN PaintScreen;
 
 /******************************************************************************
 function: Paint SetScale
@@ -21,14 +21,14 @@ parameter:
 void SetScale(UBYTE scale)
 {
     if(scale == 2){
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 8 == 0)? (Paint.WidthMemory / 8 ): (Paint.WidthMemory / 8 + 1);
+        PaintScreen.Scale = scale;
+        PaintScreen.WidthByte = (PaintScreen.WidthMemory % 8 == 0)? (PaintScreen.WidthMemory / 8 ): (PaintScreen.WidthMemory / 8 + 1);
     }else if(scale == 4){
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
+        PaintScreen.Scale = scale;
+        PaintScreen.WidthByte = (PaintScreen.WidthMemory % 4 == 0)? (PaintScreen.WidthMemory / 4 ): (PaintScreen.WidthMemory / 4 + 1);
     }else if(scale == 7){//Only applicable with 5in65 e-Paper
-		Paint.Scale = scale;
-		Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
+		PaintScreen.Scale = scale;
+		PaintScreen.WidthByte = (PaintScreen.WidthMemory % 2 == 0)? (PaintScreen.WidthMemory / 2 ): (PaintScreen.WidthMemory / 2 + 1);;
 	}else{
         Debug("Set Scale Input parameter error\r\n");
         Debug("Scale Only support: 2 4 7\r\n");

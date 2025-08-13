@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdlib.h": "c",
-        "paintscreen.h": "c"
+        "paintscreen.h": "c",
+        "dev_config.h": "c"
     }
 }
