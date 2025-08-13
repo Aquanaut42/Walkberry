@@ -2,8 +2,8 @@
 #include "EPD_2in9_V2.h"
 #include "ICNT86X.h"
 #include "time.h"
-#include "paintScreen.h"
-#include "fonts.h"
+#include "Draw/paintScreen.h"
+#include "../Fonts/fonts.h"
 
 extern ICNT86_Dev ICNT86_Dev_Now, ICNT86_Dev_Old;
 extern int IIC_Address;
@@ -283,8 +283,7 @@ int TestCode_2in9(void)
 					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
 					ReFlag = 1;
 				}
-				else if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 && 
-				   ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
+				else if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 && ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
 					Page = 4;
 				}
 			}
@@ -400,17 +399,16 @@ int TestCode_2in9(void)
 			if(Page == 4 && ReFlag == 0) {	//Text test
 				printf("Testing text ...\r\n");
 
-
 				// Draw header or title (matching existing style)
-				DrawString_EN(10, 5, "Text Page", &Font16, WHITE, BLACK);
+				Paint_DrawString_EN(1, 5, "Text Page", &Font16, WHITE, BLACK);
 
 				// Draw main text content
-				DrawString_EN(10, 30, "Hello! This page shows text", &Font12, BLACK, WHITE);
-				DrawString_EN(10, 50, "You can add multiple lines", &Font12, BLACK, WHITE);
-				DrawString_EN(10, 70, "or dynamic content here.", &Font12, BLACK, WHITE);
+				Paint_DrawString_EN(1, 3, "Hello! This page shows text", &Font12, BLACK, WHITE);
+				Paint_DrawString_EN(1, 10, "You can add multiple lines", &Font12, BLACK, WHITE);
+				Paint_DrawString_EN(1, 10, "or dynamic content here.", &Font12, BLACK, WHITE);
 
 				// Send buffer to display
-				//EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
+				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 				ReFlag = 1;
 			}
 			//++++++++++++++++++++ Test end

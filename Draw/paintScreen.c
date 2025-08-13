@@ -9,7 +9,7 @@
 
 #include "paintScreen.h"
 #include <DEV_Config.h>
-#include "fonts.h"
+#include "../Fonts/fonts.h"
 
 PAINTSCREEN PaintScreen;
 
@@ -84,10 +84,11 @@ void DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 {
     UWORD Page, Column;
 
+    /*
     if (Xpoint > PaintScreen.Width || Ypoint > PaintScreen.Height) {
         Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
         return;
-    }
+    }*/
 
     uint32_t Char_Offset = (Acsii_Char - ' ') * Font->Height * (Font->Width / 8 + (Font->Width % 8 ? 1 : 0));
     const unsigned char *ptr = &Font->table[Char_Offset];
@@ -120,7 +121,7 @@ void DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 //*****************************************************************************
 
 /******************************************************************************
-function:	Display the string
+function: Display the string
 parameter:
     Xstart           ：X coordinate
     Ystart           ：Y coordinate
@@ -135,10 +136,11 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
 
+    /*
     if (Xstart > PaintScreen.Width || Ystart > PaintScreen.Height) {
         Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
         return;
-    }
+    }*/
 
     while (* pString != '\0') {
         //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character

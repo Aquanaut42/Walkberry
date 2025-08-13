@@ -1,5 +1,6 @@
 
 #include "DEV_Config.h"
+#include "../Fonts/fonts.h"
 
 /**
  * Image attributes
