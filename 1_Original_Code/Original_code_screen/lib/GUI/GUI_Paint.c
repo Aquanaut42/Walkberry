@@ -258,37 +258,6 @@ void Paint_SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 }
 
 /******************************************************************************
-function: Draw Pixels vertical
-parameter:
-    Xpoint : At point X
-    Ypoint : At point Y
-    Color  : Painted colors
-******************************************************************************/
-void Paint_SetPixelVertical(UWORD Xpoint, UWORD Ypoint, UWORD Color)
-{
-    
-    if(Paint.Scale == 2){
-        UDOUBLE Addr = Ypoint / 8 + Xpoint * Paint.WidthByte;
-        UBYTE Rdata = Paint.Image[Addr];
-        if(Color == BLACK)
-            Paint.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
-        else
-            Paint.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
-    }else if(Paint.Scale == 4){
-        UDOUBLE Addr = Ypoint / 4 + Xpoint * Paint.WidthByte;
-        Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
-        UBYTE Rdata = Paint.Image[Addr];
-        
-        Rdata = Rdata & (~(0xC0 >> ((Xpoint % 4)*2)));//Clear first, then set value
-        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
-    }else if(Paint.Scale == 7){
-		UDOUBLE Addr = Ypoint / 2  + Xpoint * Paint.WidthByte;
-		UBYTE Rdata = Paint.Image[Addr];
-		Rdata = Rdata & (~(0xF0 >> ((Ypoint % 2)*4)));//Clear first, then set value
-		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
-	}
-}
-/******************************************************************************
 function: Clear the color of the picture
 parameter:
     Color : Painted colors
@@ -558,14 +527,14 @@ void Paint_DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
             //To determine whether the font background color and screen background color is consistent
             if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
                 if (*ptr & (0x80 >> (Column % 8)))
-                    Paint_SetPixelVertical(Xpoint + Column, Ypoint + Page, Color_Foreground);
+                    Paint_SetPixel(Xpoint + Page, Ypoint + Column, Color_Foreground);
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
             } else {
                 if (*ptr & (0x80 >> (Column % 8))) {
-                    Paint_SetPixelVertical(Xpoint + Column, Ypoint + Page, Color_Foreground);
+                    Paint_SetPixel(Xpoint + Page, Ypoint + Column, Color_Foreground);
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                 } else {
-                    Paint_SetPixelVertical(Xpoint + Column, Ypoint + Page, Color_Background);
+                    Paint_SetPixel(Xpoint + Page, Ypoint + Column, Color_Background);
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                 }
             }
@@ -601,13 +570,13 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
 
     while (* pString != '\0') {
         //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-        if ((Xpoint + Font->Width ) > Paint.Width ) {
+        if ((Ypoint + Font->Width ) > Paint.Height ) {
             Xpoint = Xstart;
             Ypoint += Font->Height;
         }
 
         // If the Y direction is full, reposition to(Xstart, Ystart)
-        if ((Ypoint  + Font->Height ) > Paint.Height ) {
+        if ((Xpoint  + Font->Height ) > Paint.Width ) {
             Xpoint = Xstart;
             Ypoint = Ystart;
         }
