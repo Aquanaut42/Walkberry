@@ -3,7 +3,7 @@ DIR_Driver	 = ./lib/Driver
 DIR_GUI		 = ./lib/GUI
 DIR_FONTS    = ./lib/Fonts
 DIR_EPD		 = ./lib/EPD
-DIR_Examples = ./examples
+DIR_Examples = ./
 DIR_BIN      = ./bin
 
 OBJ_C = $(wildcard ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_Examples}/*.c ${DIR_FONTS}/*.c )

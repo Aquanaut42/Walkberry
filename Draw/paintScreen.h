@@ -29,3 +29,11 @@ extern PAINT Paint;
 #define IMAGE_BACKGROUND    WHITE
 #define FONT_FOREGROUND     BLACK
 #define FONT_BACKGROUND     WHITE
+
+/**
+ * Drawing images and text
+ */
+void SetScale(UBYTE scale);
+void SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color);
+void DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char, sFONT* Font, UWORD Color_Foreground, UWORD Color_Background);
+void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString, sFONT* Font, UWORD Color_Foreground, UWORD Color_Background);
