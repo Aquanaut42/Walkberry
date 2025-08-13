@@ -564,49 +564,6 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Ypoint = Ystart;
 
     if (Xstart > Paint.Width || Ystart > Paint.Height) {
-        Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
-        return;
-    }
-
-    while (* pString != '\0') {
-        //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-        if ((Xpoint + Font->Width ) > Paint.Width ) {
-            Xpoint = Xstart;
-            Ypoint += Font->Height;
-        }
-
-        // If the Y direction is full, reposition to(Xstart, Ystart)
-        if ((Ypoint  + Font->Height ) > Paint.Height ) {
-            Xpoint = Xstart;
-            Ypoint = Ystart;
-        }
-        Paint_DrawChar(Xpoint, Ypoint, * pString, Font, Color_Background, Color_Foreground);
-
-        //The next character of the address
-        pString ++;
-
-        //The next word of the abscissa increases the font of the broadband
-        Xpoint += Font->Width;
-    }
-}
-
-/******************************************************************************
-function:    Display the string vertically (one character per line)
-parameter:
-    Xstart           ：X coordinate (fixed)
-    Ystart           ：Y coordinate (start)
-    pString          ：The first address of the English string to be displayed
-    Font             ：A structure pointer that displays a character size
-    Color_Foreground : Select the foreground color
-    Color_Background : Select the background color
-******************************************************************************/
-void Paint_DrawString_EN_Vertical(UWORD Xstart, UWORD Ystart, const char * pString,
-                                  sFONT* Font, UWORD Color_Foreground, UWORD Color_Background)
-{
-    UWORD Xpoint = Xstart;
-    UWORD Ypoint = Ystart;
-
-    if (Xstart > Paint.Width || Ystart > Paint.Height) {
         Debug("Paint_DrawString_EN_Vertical Input exceeds the normal display range\r\n");
         return;
     }
