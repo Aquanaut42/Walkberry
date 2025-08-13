@@ -280,6 +280,10 @@ int TestCode_2in9(void)
 					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
 					ReFlag = 1;
 				}
+				else if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 && 
+				   ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
+					Page = 4;
+				}
 			}
 
 			if(Page == 1 && ReFlag == 0) {	//white board
@@ -391,28 +395,20 @@ int TestCode_2in9(void)
 
 			//++++++++++++++++++++ Test
 			if(Page == 4 && ReFlag == 0) {	//Text test
-				if(ICNT86_Dev_Now.X[0] > 60 && ICNT86_Dev_Now.X[0] < 80 && 
-				   ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
-					printf("Testing text ...\r\n");
-					// Clear display buffer
-					ClearBlackImage(BlackImage);
+				printf("Testing text ...\r\n");
 
-					// Draw header or title (matching existing style)
-					DrawString_EN(10, 5, "Text Page", &Font16, BLACK);
 
-					// Draw main text content
-					DrawString_EN(10, 30, "Hello! This page shows text", &Font12, BLACK);
-					DrawString_EN(10, 50, "You can add multiple lines", &Font12, BLACK);
-					DrawString_EN(10, 70, "or dynamic content here.", &Font12, BLACK);
+				// Draw header or title (matching existing style)
+				DrawString_EN(10, 5, "Text Page", &Font16, BLACK);
 
-					// Optional: draw a "Back" button like your other pages
-					DrawRectangle(5, 110, 60, 30, BLACK, 1); // outline
-					DrawString_EN(10, 115, "Back", &Font12, BLACK);
+				// Draw main text content
+				DrawString_EN(10, 30, "Hello! This page shows text", &Font12, WHITE, BLACK);
+				DrawString_EN(10, 50, "You can add multiple lines", &Font12, WHITE, BLACK);
+				DrawString_EN(10, 70, "or dynamic content here.", &Font12, WHITE, BLACK);
 
-					// Send buffer to display
-					EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
-					ReFlag = 1;
-				}
+				// Send buffer to display
+				//EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
+				ReFlag = 1;
 			}
 			//++++++++++++++++++++ Test end
 		}
