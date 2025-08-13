@@ -9,7 +9,7 @@
 
 #include "paintScreen.h"
 #include <DEV_Config.h>
-#include <fonts.h>
+#include "fonts.h"
 
 PAINTSCREEN PaintScreen;
 

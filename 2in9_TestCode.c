@@ -3,6 +3,7 @@
 #include "ICNT86X.h"
 #include "time.h"
 #include "paintScreen.h"
+#include "fonts.h"
 
 extern ICNT86_Dev ICNT86_Dev_Now, ICNT86_Dev_Old;
 extern int IIC_Address;
