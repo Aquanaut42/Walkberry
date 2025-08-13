@@ -11,7 +11,7 @@
 #include <DEV_Config.h>
 #include <fonts.h>
 
-PAINT Paint;
+PAINT PaintScreen;
 
 /******************************************************************************
 function: Paint SetScale
@@ -46,25 +46,25 @@ parameter:
 void SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 {
     
-    if(Paint.Scale == 2){
-        UDOUBLE Addr = Ypoint / 8 + Xpoint * Paint.WidthByte;
-        UBYTE Rdata = Paint.Image[Addr];
+    if(PaintScreen.Scale == 2){
+        UDOUBLE Addr = Ypoint / 8 + Xpoint * PaintScreen.WidthByte;
+        UBYTE Rdata = PaintScreen.Image[Addr];
         if(Color == BLACK)
-            Paint.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
+            PaintScreen.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
         else
-            Paint.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
-    }else if(Paint.Scale == 4){
-        UDOUBLE Addr = Ypoint / 4 + Xpoint * Paint.WidthByte;
+            PaintScreen.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
+    }else if(PaintScreen.Scale == 4){
+        UDOUBLE Addr = Ypoint / 4 + Xpoint * PaintScreen.WidthByte;
         Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
-        UBYTE Rdata = Paint.Image[Addr];
+        UBYTE Rdata = PaintScreen.Image[Addr];
         
         Rdata = Rdata & (~(0xC0 >> ((Xpoint % 4)*2)));//Clear first, then set value
-        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
-    }else if(Paint.Scale == 7){
-		UDOUBLE Addr = Ypoint / 2  + Xpoint * Paint.WidthByte;
-		UBYTE Rdata = Paint.Image[Addr];
+        PaintScreen.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
+    }else if(PaintScreen.Scale == 7){
+		UDOUBLE Addr = Ypoint / 2  + Xpoint * PaintScreen.WidthByte;
+		UBYTE Rdata = PaintScreen.Image[Addr];
 		Rdata = Rdata & (~(0xF0 >> ((Ypoint % 2)*4)));//Clear first, then set value
-		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
+		PaintScreen.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
 	}
 }
 //*****************************************************************************
@@ -84,7 +84,7 @@ void DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 {
     UWORD Page, Column;
 
-    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
+    if (Xpoint > PaintScreen.Width || Ypoint > PaintScreen.Height) {
         Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
         return;
     }
@@ -135,20 +135,20 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
 
-    if (Xstart > Paint.Width || Ystart > Paint.Height) {
+    if (Xstart > PaintScreen.Width || Ystart > PaintScreen.Height) {
         Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
         return;
     }
 
     while (* pString != '\0') {
         //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-        if ((Xpoint + Font->Width ) > Paint.Width ) {
+        if ((Xpoint + Font->Width ) > PaintScreen.Width ) {
             Xpoint = Xstart;
             Ypoint += Font->Height;
         }
 
         // If the Y direction is full, reposition to(Xstart, Ystart)
-        if ((Ypoint  + Font->Height ) > Paint.Height ) {
+        if ((Ypoint  + Font->Height ) > PaintScreen.Height ) {
             Xpoint = Xstart;
             Ypoint = Ystart;
         }

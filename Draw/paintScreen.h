@@ -11,13 +11,11 @@ typedef struct {
     UWORD WidthMemory;
     UWORD HeightMemory;
     UWORD Color;
-    UWORD Rotate;
-    UWORD Mirror;
     UWORD WidthByte;
     UWORD HeightByte;
     UWORD Scale;
 } PAINT;
-extern PAINT Paint;
+extern PAINT PaintScreen    ;
 
 /**
  * image color

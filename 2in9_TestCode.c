@@ -2,6 +2,7 @@
 #include "EPD_2in9_V2.h"
 #include "ICNT86X.h"
 #include "time.h"
+#include "paintScreen.h"
 
 extern ICNT86_Dev ICNT86_Dev_Now, ICNT86_Dev_Old;
 extern int IIC_Address;

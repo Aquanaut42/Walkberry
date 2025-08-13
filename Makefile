@@ -5,8 +5,9 @@ DIR_FONTS    = ./lib/Fonts
 DIR_EPD		 = ./lib/EPD
 DIR_Examples = ./
 DIR_BIN      = ./bin
+DIR_Draw	 = ./Draw
 
-OBJ_C = $(wildcard ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_Examples}/*.c ${DIR_FONTS}/*.c )
+OBJ_C = $(wildcard ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_Examples}/*.c ${DIR_FONTS}/*.c ${DIR_Draw}/*.c )
 OBJ_O = $(patsubst %.c,${DIR_BIN}/%.o,$(notdir ${OBJ_C}))
 
 TARGET = main
@@ -42,7 +43,7 @@ ${TARGET}:${OBJ_O}
 $(shell mkdir -p $(DIR_BIN))
 
 ${DIR_BIN}/%.o:$(DIR_Examples)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_GUI)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_GUI) -I $(DIR_Draw)
     
 ${DIR_BIN}/%.o:$(DIR_Driver)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) $(DEBUG)
