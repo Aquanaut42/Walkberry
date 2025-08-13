@@ -404,7 +404,7 @@ int TestCode_2in9(void)
 
 				// Draw main text content
 				Paint_DrawString_EN(1, 15, "Hello! This page shows text", &Font12, WHITE, BLACK);
-				DrawString_EN(1, 25, "You can add multiple lines", &Font12, WHITE, BLACK);
+				DrawString_EN(1, 25, "You can add multiple lines", &Font8, WHITE, BLACK);
 				DrawString_EN(1, 35, "or dynamic content here.", &Font12, WHITE, BLACK);
 
 				// Send buffer to display

@@ -12,7 +12,6 @@
 #include "../Fonts/fonts.h"
 #include "GUI_Paint.h"
 
-PAINT Paint;
 
 /******************************************************************************
 function: Paint SetScale
@@ -48,24 +47,25 @@ void SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 {
     
     if(Paint.Scale == 2){
-        UDOUBLE Addr = Ypoint / 8 + Xpoint * Paint.WidthByte;
+        UDOUBLE Addr = Xpoint / 8 + Ypoint * Paint.WidthByte;
         UBYTE Rdata = Paint.Image[Addr];
         if(Color == BLACK)
-            Paint.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
+            Paint.Image[Addr] = Rdata & ~(0x80 >> (Xpoint % 8));
         else
-            Paint.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
+            Paint.Image[Addr] = Rdata | (0x80 >> (Xpoint % 8));
     }else if(Paint.Scale == 4){
-        UDOUBLE Addr = Ypoint / 4 + Xpoint * Paint.WidthByte;
+        UDOUBLE Addr = Xpoint / 4 + Ypoint * Paint.WidthByte;
         Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
         UBYTE Rdata = Paint.Image[Addr];
         
         Rdata = Rdata & (~(0xC0 >> ((Xpoint % 4)*2)));//Clear first, then set value
-        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
+        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((Xpoint % 4)*2));
     }else if(Paint.Scale == 7){
-		UDOUBLE Addr = Ypoint / 2  + Xpoint * Paint.WidthByte;
+		UDOUBLE Addr = Xpoint / 2  + Ypoint * Paint.WidthByte;
 		UBYTE Rdata = Paint.Image[Addr];
-		Rdata = Rdata & (~(0xF0 >> ((Ypoint % 2)*4)));//Clear first, then set value
-		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
+		Rdata = Rdata & (~(0xF0 >> ((Xpoint % 2)*4)));//Clear first, then set value
+		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Xpoint % 2)*4));
+		// printf("Add =  %d ,data = %d\r\n",Addr,Rdata);
 	}
 }
 //*****************************************************************************
