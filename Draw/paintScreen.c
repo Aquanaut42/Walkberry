@@ -10,8 +10,9 @@
 #include "paintScreen.h"
 #include <DEV_Config.h>
 #include "../Fonts/fonts.h"
+#include "GUI_Paint.h"
 
-PAINTSCREEN PaintScreen;
+PAINT Paint;
 
 /******************************************************************************
 function: Paint SetScale
@@ -21,14 +22,14 @@ parameter:
 void SetScale(UBYTE scale)
 {
     if(scale == 2){
-        PaintScreen.Scale = scale;
-        PaintScreen.WidthByte = (PaintScreen.WidthMemory % 8 == 0)? (PaintScreen.WidthMemory / 8 ): (PaintScreen.WidthMemory / 8 + 1);
+        Paint.Scale = scale;
+        Paint.WidthByte = (Paint.WidthMemory % 8 == 0)? (Paint.WidthMemory / 8 ): (Paint.WidthMemory / 8 + 1);
     }else if(scale == 4){
-        PaintScreen.Scale = scale;
-        PaintScreen.WidthByte = (PaintScreen.WidthMemory % 4 == 0)? (PaintScreen.WidthMemory / 4 ): (PaintScreen.WidthMemory / 4 + 1);
+        Paint.Scale = scale;
+        Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
     }else if(scale == 7){//Only applicable with 5in65 e-Paper
-		PaintScreen.Scale = scale;
-		PaintScreen.WidthByte = (PaintScreen.WidthMemory % 2 == 0)? (PaintScreen.WidthMemory / 2 ): (PaintScreen.WidthMemory / 2 + 1);;
+		Paint.Scale = scale;
+		Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
 	}else{
         Debug("Set Scale Input parameter error\r\n");
         Debug("Scale Only support: 2 4 7\r\n");
@@ -46,25 +47,25 @@ parameter:
 void SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 {
     
-    if(PaintScreen.Scale == 2){
-        UDOUBLE Addr = Ypoint / 8 + Xpoint * PaintScreen.WidthByte;
-        UBYTE Rdata = PaintScreen.Image[Addr];
+    if(Paint.Scale == 2){
+        UDOUBLE Addr = Ypoint / 8 + Xpoint * Paint.WidthByte;
+        UBYTE Rdata = Paint.Image[Addr];
         if(Color == BLACK)
-            PaintScreen.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
+            Paint.Image[Addr] = Rdata & ~(0x80 >> (Ypoint % 8));
         else
-            PaintScreen.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
-    }else if(PaintScreen.Scale == 4){
-        UDOUBLE Addr = Ypoint / 4 + Xpoint * PaintScreen.WidthByte;
+            Paint.Image[Addr] = Rdata | (0x80 >> (Ypoint % 8));
+    }else if(Paint.Scale == 4){
+        UDOUBLE Addr = Ypoint / 4 + Xpoint * Paint.WidthByte;
         Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
-        UBYTE Rdata = PaintScreen.Image[Addr];
+        UBYTE Rdata = Paint.Image[Addr];
         
         Rdata = Rdata & (~(0xC0 >> ((Xpoint % 4)*2)));//Clear first, then set value
-        PaintScreen.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
-    }else if(PaintScreen.Scale == 7){
-		UDOUBLE Addr = Ypoint / 2  + Xpoint * PaintScreen.WidthByte;
-		UBYTE Rdata = PaintScreen.Image[Addr];
+        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((Ypoint % 4)*2));
+    }else if(Paint.Scale == 7){
+		UDOUBLE Addr = Ypoint / 2  + Xpoint * Paint.WidthByte;
+		UBYTE Rdata = Paint.Image[Addr];
 		Rdata = Rdata & (~(0xF0 >> ((Ypoint % 2)*4)));//Clear first, then set value
-		PaintScreen.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
+		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Ypoint % 2)*4));
 	}
 }
 //*****************************************************************************
@@ -144,13 +145,13 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
 
     while (* pString != '\0') {
         //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-        if ((Xpoint + Font->Width ) > PaintScreen.Width ) {
+        if ((Xpoint + Font->Width ) > Paint.Width ) {
             Xpoint = Xstart;
             Ypoint += Font->Height;
         }
 
         // If the Y direction is full, reposition to(Xstart, Ystart)
-        if ((Ypoint  + Font->Height ) > PaintScreen.Height ) {
+        if ((Ypoint  + Font->Height ) > Paint.Height ) {
             Xpoint = Xstart;
             Ypoint = Ystart;
         }

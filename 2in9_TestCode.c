@@ -407,12 +407,6 @@ int TestCode_2in9(void)
 				DrawString_EN(1, 25, "You can add multiple lines", &Font12, WHITE, BLACK);
 				DrawString_EN(1, 35, "or dynamic content here.", &Font12, WHITE, BLACK);
 
-				Paint_SetPixel(1, 50, BLACK);
-				SetPixel(1, 51, BLACK);
-				Paint_SetPixel(1, 52, BLACK);
-				SetPixel(1, 53, BLACK);
-				Paint_SetPixel(1, 54, BLACK);
-
 				// Send buffer to display
 				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 				ReFlag = 1;
