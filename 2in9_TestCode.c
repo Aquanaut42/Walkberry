@@ -403,9 +403,9 @@ int TestCode_2in9(void)
 				Paint_DrawString_EN(1, 1, "Text Page", &Font16, WHITE, BLACK);
 
 				// Draw main text content
-				Paint_DrawString_EN(1, 15, "Hello! This page shows text", &Font12, WHITE, BLACK);
-				Paint_DrawString_EN(1, 25, "You can add multiple lines", &Font12, WHITE, BLACK);
-				Paint_DrawString_EN(1, 35, "or dynamic content here.", &Font12, WHITE, BLACK);
+				Paint_DrawString_EN_Vertical(1, 15, "Hello! This page shows text", &Font12, WHITE, BLACK);
+				Paint_DrawString_EN_Vertical(1, 25, "You can add multiple lines", &Font12, WHITE, BLACK);
+				Paint_DrawString_EN_Vertical(1, 35, "or dynamic content here.", &Font12, WHITE, BLACK);
 
 				// Send buffer to display
 				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
