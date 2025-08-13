@@ -264,7 +264,7 @@ parameter:
     Ypoint : At point Y
     Color  : Painted colors
 ******************************************************************************/
-void SetPixelVertical(UWORD Xpoint, UWORD Ypoint, UWORD Color)
+void Paint_SetPixelVertical(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 {
     
     if(Paint.Scale == 2){
