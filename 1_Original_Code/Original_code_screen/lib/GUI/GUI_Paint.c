@@ -568,25 +568,27 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
         return;
     }
 
-    while (* pString != '\0') {
-        //if X direction filled , reposition to(Xstart,Ypoint),Ypoint is Y direction plus the Height of the character
-        if ((Ypoint + Font->Width ) > Paint.Height ) {
-            Xpoint = Xstart;
-            Ypoint += Font->Height;
+    while (*pString != '\0') {
+
+        // Draw the character
+        Paint_DrawChar(Xpoint, Ypoint, *pString, Font, Color_Foreground, Color_Background);
+
+        // Move down for the next character
+        Ypoint += Font->Height;
+
+        // If we reached the bottom, move to next column
+        if ((Ypoint + Font->Height) > Paint.Height) {
+            Ypoint = Ystart;
+            Xpoint += Font->Width;
         }
 
-        // If the Y direction is full, reposition to(Xstart, Ystart)
-        if ((Xpoint  + Font->Height ) > Paint.Width ) {
+        // If we reached the right edge, wrap around (optional)
+        if ((Xpoint + Font->Width) > Paint.Width) {
             Xpoint = Xstart;
             Ypoint = Ystart;
         }
-        Paint_DrawChar(Xpoint, Ypoint, * pString, Font, Color_Background, Color_Foreground);
 
-        //The next character of the address
-        pString ++;
-
-        //The next word of the abscissa increases the font of the broadband
-        Xpoint += Font->Width;
+        pString++;
     }
 }
 
