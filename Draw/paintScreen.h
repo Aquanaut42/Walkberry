@@ -14,8 +14,8 @@ typedef struct {
     UWORD WidthByte;
     UWORD HeightByte;
     UWORD Scale;
-} PAINT;
-extern PAINT PaintScreen    ;
+} PAINTSCREEN;
+extern PAINTSCREEN PaintScreen    ;
 
 /**
  * image color

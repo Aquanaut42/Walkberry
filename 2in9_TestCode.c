@@ -149,6 +149,7 @@ int Test4gray_2in9(void)
     EPD_2IN9_V2_4GrayDisplay(BlackImage);
     DEV_Delay_ms(3000);
     free(BlackImage);
+	return 0;
 }
 //========================================
 
@@ -400,12 +401,12 @@ int TestCode_2in9(void)
 
 
 				// Draw header or title (matching existing style)
-				DrawString_EN(10, 5, "Text Page", &Font16, BLACK);
+				DrawString_EN(10, 5, "Text Page", &Font16, WHITE, BLACK);
 
 				// Draw main text content
-				DrawString_EN(10, 30, "Hello! This page shows text", &Font12, WHITE, BLACK);
-				DrawString_EN(10, 50, "You can add multiple lines", &Font12, WHITE, BLACK);
-				DrawString_EN(10, 70, "or dynamic content here.", &Font12, WHITE, BLACK);
+				DrawString_EN(10, 30, "Hello! This page shows text", &Font12, BLACK, WHITE);
+				DrawString_EN(10, 50, "You can add multiple lines", &Font12, BLACK, WHITE);
+				DrawString_EN(10, 70, "or dynamic content here.", &Font12, BLACK, WHITE);
 
 				// Send buffer to display
 				//EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
