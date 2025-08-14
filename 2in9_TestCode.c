@@ -414,24 +414,16 @@ int TestCode_2in9(void)
 				ClearWindows(WHITE);
 				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 				ClearWindows(WHITE);
-				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 				
-				//DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK);
+				DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK);
 
 				for ( int i = 0; i < 1; i++ ) {
-				//	DrawString_EN(10, 20 + i*20, "9876543210" + i, &Font20, WHITE, BLACK);
+					DrawString_EN(10, 20 + i*20, "9876543210" + i, &Font20, WHITE, BLACK);
 				}
 
 				if ( PlayBackBar == 1 ) {
-					//PlayBackBarBottom();
+					PlayBackBarBottom();
 				}
-
-				DrawString_EN(0, 0, "0", &Font20, WHITE, BLACK);
-                DrawString_EN(15, 10, "1", &Font20, WHITE, BLACK);
-                DrawString_EN(30, 20, "2", &Font20, WHITE, BLACK);
-
-                Paint_DrawLine( 1, 1, 40, 50, BLACK, 2, LINE_STYLE_SOLID);
-                Paint_DrawLine( 10, 10, 40, 50, BLACK, 2, LINE_STYLE_SOLID);
 
 
 				// Send buffer to display

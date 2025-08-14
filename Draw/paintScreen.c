@@ -93,8 +93,8 @@ int DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 {
     UWORD Page, Column;
 
-    if ( (Xpoint + Font->Width) > Paint.Width || Xpoint < 0|| 
-         (Ypoint + Font->Height) > Paint.Height || Ypoint < 0) {
+    if ( (Xpoint + Font->Height) > Paint.Height || Xpoint < 0|| 
+         (Ypoint + Font->Width) > Paint.Width || Ypoint < 0) {
         return -1;
     }
 
@@ -151,8 +151,9 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
 
-    if (Xstart > Paint.Width || Xstart < 0 || 
-        Ystart > Paint.Height || Ystart < 0) {
+    if (Xstart > Paint.Height || Xstart < 0 || 
+        Ystart > Paint.Width || Ystart < 0) {
+        Debug("DraeString out of boundr\n");
         return;
     }
 
@@ -188,8 +189,8 @@ parameter:
 ******************************************************************************/
 void ClearWindows( UWORD Color )
 {
-    for (int Y = 0; Y < Paint.Height; Y++) {
-        for ( int X = 0; X < Paint.Width; X++) {//8 pixel =  1 byte
+    for (int Y = 0; Y < Paint.Width; Y++) {
+        for ( int X = 0; X < Paint.Height; X++) {//8 pixel =  1 byte
             if (SetPixel(X, Y, Color) == -1) {
                 return;
             }
