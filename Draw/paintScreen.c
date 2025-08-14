@@ -46,10 +46,10 @@ Returns:
     1 if successful, -1 if out of bounds
 ******************************************************************************/
 int SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
-{
-    if ( Xpoint >= Paint.Width || Xpoint <= 0 || 
-         Ypoint >= Paint.Height || Ypoint <= 0) {
-        Debug("Exceeding display boundaries\r\n");
+{   
+    
+    if ( Xpoint > Paint.Height || Xpoint < 0 || 
+         Ypoint > Paint.Width || Ypoint < 0) {
         return -1;
     }
     if(Paint.Scale == 2){
@@ -71,7 +71,6 @@ int SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 		UBYTE Rdata = Paint.Image[Addr];
 		Rdata = Rdata & (~(0xF0 >> ((Xpoint % 2)*4)));//Clear first, then set value
 		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((Xpoint % 2)*4));
-		// printf("Add =  %d ,data = %d\r\n",Addr,Rdata);
 	}
     return 1;
 }
@@ -94,9 +93,8 @@ int DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 {
     UWORD Page, Column;
 
-    if ( (Xpoint + Font->Width) > Paint.Width || Xpoint <= 0|| 
-         (Ypoint + Font->Height) > Paint.Height || Ypoint <= 0) {
-        Debug("Paint_DrawString_EN Input exceeds the normal display range (DrawChar)\r\n");
+    if ( (Xpoint + Font->Width) > Paint.Width || Xpoint < 0|| 
+         (Ypoint + Font->Height) > Paint.Height || Ypoint < 0) {
         return -1;
     }
 
@@ -110,20 +108,17 @@ int DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
             if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
                 if (*ptr & (0x80 >> (Column % 8)))
                     if (SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground) == -1) {
-                        Debug("SetPixel failed\r\n");
                         return -1;
                     }  
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
             } else {
                 if (*ptr & (0x80 >> (Column % 8))) {
                     if (SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground) == -1) {
-                        Debug("SetPixel failed\r\n");
                         return -1;
                     }   
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                 } else {
                     if (SetPixel(Xpoint + Column, Ypoint + Page, Color_Background) == -1) {
-                        Debug("SetPixel failed\r\n");
                         return -1;
                     }   
                     // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
@@ -156,24 +151,20 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
 
-    if (Xstart >= Paint.Width || Xstart <= 0 || 
-        Ystart >= Paint.Height || Ystart <= 0) {
-        Debug("Paint_DrawString_EN Input exceeds the normal display range (DrawString_EN)\r\n");
+    if (Xstart > Paint.Width || Xstart < 0 || 
+        Ystart > Paint.Height || Ystart < 0) {
         return;
     }
 
     while (* pString != '\0') {
         //if it's out of bounds, return
-        if (Xpoint >= Paint.Width || Xpoint <= 0) {
-            Debug("Exceeding display boundaries (DrawString_EN x)\r\n");
+        if (Xpoint > Paint.Width || Xpoint < 0) {
             return;
         }
-        if (Ypoint >= Paint.Height || Ypoint <= 0) {
-            Debug("Exceeding display boundaries (DrawString_EN y)\r\n");
+        if (Ypoint > Paint.Height || Ypoint < 0) {
             return;
         }
         if (DrawChar(Xpoint, Ypoint, * pString, Font, Color_Background, Color_Foreground) == -1) {
-            Debug("DrawChar failed\r\n");
             return;
         }
 
@@ -200,7 +191,6 @@ void ClearWindows( UWORD Color )
     for (int Y = 0; Y < Paint.Height; Y++) {
         for ( int X = 0; X < Paint.Width; X++) {//8 pixel =  1 byte
             if (SetPixel(X, Y, Color) == -1) {
-                Debug("SetPixel failed in ClearWindows\r\n");
                 return;
             }
         }
@@ -225,7 +215,6 @@ void DrawLineHorizontal(UWORD Xstart, UWORD Y, UWORD Xend, UWORD Color, int Line
     for ( int dx = 0 ; dx > Xend ; dx++ ) {
         for ( int i = 0 ; i < Line_width ; i++ ) {
             if (SetPixel(Xstart + dx, Y + i, Color) == -1) {
-                Debug("SetPixel failed in DrawLineHorizontal\r\n");
                 return;
             }
         }
@@ -248,7 +237,6 @@ void DrawLineVertical(UWORD Ystart, UWORD X, UWORD Yend, UWORD Color, int Line_w
     for ( int dx = 0 ; dx > Yend ; dx++ ) {
         for ( int i = 0 ; i < Line_width ; i++ ) {
             if (SetPixel(Ystart + dx, X + i, Color) == -1) {
-                Debug("SetPixel failed in DrawLineVertical\r\n");
                 return;
             }
         }
