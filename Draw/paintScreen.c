@@ -165,3 +165,82 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     }
 }
 //*****************************************************************************
+
+/******************************************************************************
+function: Clear the color of a window
+parameter:
+    Xstart : x starting point
+    Ystart : Y starting point
+    Xend   : x end point
+    Yend   : y end point
+    Color  : Painted colors
+******************************************************************************/
+void ClearWindows( UWORD Color)
+{
+    UWORD X, Y;
+    for (Y = 0; Y < Paint.Height; Y++) {
+        for (X = 0; X < Paint.Width; X++) {//8 pixel =  1 byte
+            Paint_SetPixel(X, Y, Color);
+        }
+    }
+}
+//*****************************************************************************
+
+/******************************************************************************
+function: Draw a line of arbitrary slope
+parameter:
+    Xstart ：Starting Xpoint point coordinates
+    Ystart ：Starting Xpoint point coordinates
+    Xend   ：End point Xpoint coordinate
+    Yend   ：End point Ypoint coordinate
+    Color  ：The color of the line segment
+    Line_width : Line width
+    Line_Style: Solid and dotted lines
+******************************************************************************/
+void DrawLine(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
+                    UWORD Color, DOT_PIXEL Line_width, LINE_STYLE Line_Style)
+{
+    if (Xstart > Paint.Width || Ystart > Paint.Height ||
+        Xend > Paint.Width || Yend > Paint.Height) {
+        Debug("Paint_DrawLine Input exceeds the normal display range\r\n");
+        return;
+    }
+
+    UWORD Xpoint = Xstart;
+    UWORD Ypoint = Ystart;
+    int dx = (int)Xend - (int)Xstart >= 0 ? Xend - Xstart : Xstart - Xend;
+    int dy = (int)Yend - (int)Ystart <= 0 ? Yend - Ystart : Ystart - Yend;
+
+    // Increment direction, 1 is positive, -1 is counter;
+    int XAddway = Xstart < Xend ? 1 : -1;
+    int YAddway = Ystart < Yend ? 1 : -1;
+
+    //Cumulative error
+    int Esp = dx + dy;
+    char Dotted_Len = 0;
+
+    for (;;) {
+        Dotted_Len++;
+        //Painted dotted line, 2 point is really virtual
+        if (Line_Style == LINE_STYLE_DOTTED && Dotted_Len % 3 == 0) {
+            //Debug("LINE_DOTTED\r\n");
+            Paint_DrawPoint(Xpoint, Ypoint, IMAGE_BACKGROUND, Line_width, DOT_STYLE_DFT);
+            Dotted_Len = 0;
+        } else {
+            Paint_DrawPoint(Xpoint, Ypoint, Color, Line_width, DOT_STYLE_DFT);
+        }
+        if (2 * Esp >= dy) {
+            if (Xpoint == Xend)
+                break;
+            Esp += dy;
+            Xpoint += XAddway;
+        }
+        if (2 * Esp <= dx) {
+            if (Ypoint == Yend)
+                break;
+            Esp += dx;
+            Ypoint += YAddway;
+        }
+    }
+}
+//*****************************************************************************

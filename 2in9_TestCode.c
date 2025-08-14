@@ -152,7 +152,15 @@ int Test4gray_2in9(void)
     free(BlackImage);
 	return 0;
 }
-//========================================
+//*****************************************************************************
+
+/******************************************************************************
+function: Draw the Playback bar at the bottom of the screen
+******************************************************************************/
+void PlayBackBarBottom(){
+	DrawLine(200, 0, 200, 75, BLACK, 2, LINE_STYLE_SOLID);
+}
+//*****************************************************************************
 
 //========================================
 // This function is the main part
@@ -162,6 +170,7 @@ int TestCode_2in9(void)
 	IIC_Address = 0x48;
 	
 	UDOUBLE i=0, j=0, k=0;
+	UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
 	UBYTE Page=0, Photo_L=0, Photo_S=0;
 	UBYTE ReFlag=0, SelfFlag=0;
 	signal(SIGINT, Handler_2in9);
@@ -398,14 +407,18 @@ int TestCode_2in9(void)
 			//++++++++++++++++++++ Test
 			if(Page == 4 && ReFlag == 0) {	//Text test
 				printf("Testing text ...\r\n");
-				
-				// Draw header or title (matching existing style)
-				Paint_DrawString_EN(1, 1, "Text Page", &Font16, WHITE, BLACK);
 
-				// Draw main text content
-				Paint_DrawString_EN(1, 15, "Hello! This page shows text", &Font12, WHITE, BLACK);
-				DrawString_EN(1, 25, "You can add multiple lines", &Font8, WHITE, BLACK);
-				DrawString_EN(1, 35, "or dynamic content here.", &Font12, WHITE, BLACK);
+				ClearWindows(WHITE);
+				
+				DrawString_EN(1, 1, "Songs", &Font20, WHITE, BLACK);
+
+				for ( int i = 0; i < 10; i++ ) {
+					DrawString_EN(5, 10, "Songs " + i, &Font12, WHITE, BLACK);
+				}
+
+				if ( PlayBackBar == 1 ) {
+					PlayBackBarBottom();
+				}
 
 				// Send buffer to display
 				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
