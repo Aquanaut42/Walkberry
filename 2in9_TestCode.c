@@ -158,7 +158,8 @@ int Test4gray_2in9(void)
 function: Draw the Playback bar at the bottom of the screen
 ******************************************************************************/
 void PlayBackBarBottom(){
-	DrawLine(200, 0, 200, 75, BLACK, 2, LINE_STYLE_SOLID);
+	DrawLineHorizontal(200, 0, 200, BLACK, 3);
+	DrawLineVertical(200, 0, 200, GRAY1, 3);
 }
 //*****************************************************************************
 
@@ -294,6 +295,7 @@ int TestCode_2in9(void)
 				}
 				else if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 && ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
 					Page = 4;
+					PlayBackBar = 1;
 				}
 			}
 
@@ -408,17 +410,23 @@ int TestCode_2in9(void)
 			if(Page == 4 && ReFlag == 0) {	//Text test
 				printf("Testing text ...\r\n");
 
+				// Clear the screen
 				ClearWindows(WHITE);
+				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
+				ClearWindows(WHITE);
+				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 				
-				DrawString_EN(1, 1, "Songs", &Font20, WHITE, BLACK);
+				DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK);
 
-				for ( int i = 0; i < 10; i++ ) {
-					DrawString_EN(5, 10, "Songs " + i, &Font12, WHITE, BLACK);
+				for ( int i = 0; i < 2; i++ ) {
+					DrawString_EN(10, 20 + i*20, "9876543210" + i, &Font20, WHITE, BLACK);
 				}
 
 				if ( PlayBackBar == 1 ) {
-					PlayBackBarBottom();
+					//PlayBackBarBottom();
 				}
+
+				Paint_DrawLine( 30, 30, 40, 50, BLACK, 2, LINE_STYLE_SOLID);
 
 				// Send buffer to display
 				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
