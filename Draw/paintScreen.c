@@ -34,7 +34,7 @@ void SetScale(UBYTE scale)
         Debug("Scale Only support: 2 4 7\r\n");
     }
 }
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Draw Pixels
@@ -74,7 +74,7 @@ int SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 	}
     return 1;
 }
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Show English characters
@@ -133,7 +133,7 @@ int DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
     }// Write all
     return 1; // Return success
 }
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Display the string
@@ -151,18 +151,13 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
 
-    if (Xstart > Paint.Height || Xstart < 0 || 
-        Ystart > Paint.Width || Ystart < 0) {
-        Debug("DraeString out of boundr\n");
-        return;
-    }
 
     while (* pString != '\0') {
         //if it's out of bounds, return
-        if (Xpoint > Paint.Width || Xpoint < 0) {
+        if (Xpoint > Paint.Height || Xpoint < 0) {
             return;
         }
-        if (Ypoint > Paint.Height || Ypoint < 0) {
+        if (Ypoint > Paint.Width || Ypoint < 0) {
             return;
         }
         if (DrawChar(Xpoint, Ypoint, * pString, Font, Color_Background, Color_Foreground) == -1) {
@@ -176,10 +171,27 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
         Xpoint += Font->Width;
     }
 }
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Clear the color of a window
+parameter:
+    Color  : Painted colors
+******************************************************************************/
+void ClearWindows( UWORD Color )
+{
+    for (int Y = 0; Y < Paint.Width; Y++) {
+        for ( int X = 0; X < Paint.Height; X++) {
+            if (SetPixel(X, Y, Color) == -1) {
+                return;
+            }
+        }
+    }
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Clear the color of a square
 parameter:
     Xstart : x starting point
     Ystart : Y starting point
@@ -187,41 +199,36 @@ parameter:
     Yend   : y end point
     Color  : Painted colors
 ******************************************************************************/
-void ClearWindows( UWORD Color )
+void ClearSquare( int Xstart, int Ystart, int Xend, int Yend, UWORD Color )
 {
-    for (int Y = 0; Y < Paint.Width; Y++) {
-        for ( int X = 0; X < Paint.Height; X++) {//8 pixel =  1 byte
+    for (int Y = Xstart; Y < Xend; Y++) {
+        for ( int X = Ystart; X < Yend; X++) {
             if (SetPixel(X, Y, Color) == -1) {
                 return;
             }
         }
     }
 }
-//*****************************************************************************
-
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Draw a horizontal line
 parameter:
     Xstart ：Starting Xpoint point coordinates
-    Ystart ：Starting Xpoint point coordinates
+    Y      ：The Y height of the line
     Xend   ：End point Xpoint coordinate
     Color  ：The color of the line segment
     Line_width : Line width
-    Line_Style: Solid and dotted lines
 ******************************************************************************/
 void DrawLineHorizontal(UWORD Xstart, UWORD Y, UWORD Xend, UWORD Color, int Line_width)
 {
-    for ( int dx = 0 ; dx > Xend ; dx++ ) {
-        for ( int i = 0 ; i < Line_width ; i++ ) {
-            if (SetPixel(Xstart + dx, Y + i, Color) == -1) {
-                return;
-            }
+    for ( int i = Xstart ; i < Xend ; i++ ) {
+        for ( int j = 0 ; j < Line_width ; j++ ) {
+            SetPixel( i, Y + j, Color);
         }
     }
 }
-//*****************************************************************************
+//*****************************************************************************/
 
 /******************************************************************************
 function: Draw a vertical line
@@ -235,12 +242,10 @@ parameter:
 ******************************************************************************/
 void DrawLineVertical(UWORD Ystart, UWORD X, UWORD Yend, UWORD Color, int Line_width)
 {
-    for ( int dx = 0 ; dx > Yend ; dx++ ) {
-        for ( int i = 0 ; i < Line_width ; i++ ) {
-            if (SetPixel(Ystart + dx, X + i, Color) == -1) {
-                return;
-            }
+    for ( int i = Ystart ; i < Yend ; i++ ) {
+        for ( int j = 0 ; j < Line_width ; j++ ) {
+            SetPixel( X + j, i, Color);
         }
     }
 }
-//*****************************************************************************
+//*****************************************************************************/

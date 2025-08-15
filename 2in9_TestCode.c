@@ -11,6 +11,12 @@ static pthread_t t1, t2;
 UBYTE flag_2in9=1, dis_lock=1, dis_flag=1;	
 UBYTE *BlackImage, *BlackImage_ASYNC;
 
+char *Songsbmp = "./pic/Songs.bmp";
+char *Albumsbmp = "./pic/Albums.bmp";
+char *Artistsbmp = "./pic/Artists.bmp";
+char *Playlistbmp = "./pic/Playlist.bmp";
+char *whiteScreen = "./pic/White_board.bmp";
+
 char *PhotoPath_S_2in9[10] = {"./pic/2in9/Photo_1_0.bmp",
 						"./pic/2in9/Photo_1_1.bmp", "./pic/2in9/Photo_1_2.bmp", "./pic/2in9/Photo_1_3.bmp", "./pic/2in9/Photo_1_4.bmp",
 						"./pic/2in9/Photo_1_5.bmp", "./pic/2in9/Photo_1_6.bmp", "./pic/2in9/Photo_1_7.bmp", "./pic/2in9/Photo_1_8.bmp",
@@ -132,308 +138,135 @@ void Get_Current_Time(PAINT_TIME *pTime)
 }
 //========================================
 
-//========================================
-// This function initializes display in 4-gray mode (slower refresh, more shades).
-//========================================
-int Test4gray_2in9(void)
-{
-    EPD_2IN9_V2_Gray4_Init();
-    UWORD Imagesize = ((EPD_2IN9_V2_WIDTH % 4 == 0)? (EPD_2IN9_V2_WIDTH / 4 ): (EPD_2IN9_V2_WIDTH / 4 + 1)) * EPD_2IN9_V2_HEIGHT;
-    if((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL) {
-        printf("Failed to apply for black memory...\r\n");
-        return -1;
-    }
-    Paint_NewImage(BlackImage, EPD_2IN9_V2_WIDTH, EPD_2IN9_V2_HEIGHT, 0, WHITE);
-    Paint_SetScale(4);
-    Paint_Clear(WHITE);
-    GUI_ReadBmp_4Gray("./pic/2in9/2in9_Scale.bmp", 0, 0);
-    EPD_2IN9_V2_4GrayDisplay(BlackImage);
-    DEV_Delay_ms(3000);
-    free(BlackImage);
-	return 0;
-}
-//*****************************************************************************
-
 /******************************************************************************
 function: Draw the Playback bar at the bottom of the screen
 ******************************************************************************/
-void PlayBackBarBottom(){
-	DrawLineHorizontal(200, 0, 200, BLACK, 3);
-	DrawLineVertical(200, 0, 200, GRAY1, 3);
-}
-//*****************************************************************************
+void PlayBackBarBottom( const char *song, int timeTotal, int timeNow ){
+        ClearSquare( 250, 0, 296, 125, WHITE );
+        DrawLineHorizontal(0, 250, 130, BLACK, 1);
+        DrawLineHorizontal(10, 260, 120, BLACK, 1);
+        DrawLineHorizontal(10, 265, 120, BLACK, 1);
+        DrawLineVertical(260, 10, 265, BLACK, 1);
+        DrawLineVertical(260, 119, 265, BLACK, 1);
 
-//========================================
+        for ( int i = 0 ; i < (int)(( (float)timeNow / timeTotal ) * 109) ; i++ ){
+                DrawLineVertical( 260, 10 + i, 265, BLACK, 1 );
+        }
+        DrawString_EN(10, 275, song, &Font20, WHITE, BLACK);
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
 // This function is the main part
-//========================================
+******************************************************************************/
 int TestCode_2in9(void)
 {
 	IIC_Address = 0x48;
-	
-	UDOUBLE i=0, j=0, k=0;
-	UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
-	UBYTE Page=0, Photo_L=0, Photo_S=0;
-	UBYTE ReFlag=0, SelfFlag=0;
-	signal(SIGINT, Handler_2in9);
-	DEV_ModuleInit();
-	
-	pthread_create(&t1, NULL, pthread_irq_2in9, NULL);
-	
-    /*
-        Because the touch display requires a relatively fast refresh speed, the default 
-        needs to use partial refresh, and four gray levels cannot be used in this mode. 
-        Here, only four gray level picture refresh demonstration is used
-    */
-    // Test4gray_2in9();
-
+    
+    UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
+    UBYTE Page = 0;
+    UBYTE ReFlag = 0;
+    
+    signal(SIGINT, Handler_2in9);
+    DEV_ModuleInit();
+    
+    pthread_create(&t1, NULL, pthread_irq_2in9, NULL);
+    
     EPD_2IN9_V2_Init();
-	
     EPD_2IN9_V2_Clear();
-	
-	ICNT_Init();
-	DEV_Delay_ms(100);
-    //Create a new image cache
-    UWORD Imagesize = ((EPD_2IN9_V2_WIDTH % 8 == 0)? (EPD_2IN9_V2_WIDTH / 8 ): (EPD_2IN9_V2_WIDTH / 8 + 1)) * EPD_2IN9_V2_HEIGHT;
-    if((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL) {
-        printf("Failed to apply for black memory...\r\n");
+    
+    ICNT_Init();
+    DEV_Delay_ms(100);
+
+    // Create a new image buffer
+    UWORD Imagesize = ((EPD_2IN9_V2_WIDTH % 8 == 0) ? (EPD_2IN9_V2_WIDTH / 8) : (EPD_2IN9_V2_WIDTH / 8 + 1)) * EPD_2IN9_V2_HEIGHT;
+    if ((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL || 
+        (BlackImage_ASYNC = (UBYTE *)malloc(Imagesize)) == NULL) {
+        printf("Failed to allocate memory for images.\r\n");
         return -1;
     }
-    if((BlackImage_ASYNC = (UBYTE *)malloc(Imagesize)) == NULL) {
-        printf("Failed to apply for black memory...\r\n");
-        return -1;
-    }
-    printf("Paint_NewImage\r\n");
+
+    // Initialize image
     Paint_NewImage(BlackImage, EPD_2IN9_V2_WIDTH, EPD_2IN9_V2_HEIGHT, 90, WHITE);
     Paint_SelectImage(BlackImage);
     Paint_Clear(WHITE);
-	GUI_ReadBmp("./pic/2in9/Menu.bmp", 0, 0);
 
-    PAINT_TIME sPaint_time, sPaint_time_f;
-	Get_Current_Time(&sPaint_time);
-	Get_Current_Time(&sPaint_time_f);
-	Paint_DrawTime(210, 45, &sPaint_time, &Font24, WHITE, WHITE);
-	Paint_DrawDate(212, 80, &sPaint_time, &Font12, WHITE, WHITE);
+    // Only draw the main menu at startup
+    GUI_ReadBmp(whiteScreen, 0, 0);
+    GUI_ReadBmp(Songsbmp, 10, 30);
+    GUI_ReadBmp(Albumsbmp, 80, 30);
+    GUI_ReadBmp(Artistsbmp, 150, 30);
+    GUI_ReadBmp(Playlistbmp, 220, 30);
 
-	EPD_2IN9_V2_Display_Base(BlackImage);
-	memcpy(BlackImage_ASYNC, BlackImage, Imagesize);
-	pthread_create(&t2, NULL, pthread_dis_2in9, NULL);
+    // Send to display
+    EPD_2IN9_V2_Display_Base(BlackImage);
+    memcpy(BlackImage_ASYNC, BlackImage, Imagesize);
 
+    // Start display thread
+    pthread_create(&t2, NULL, pthread_dis_2in9, NULL);
 	//---------------------------------
 	// This is the main loop
 	//---------------------------------
 	while(1) {
-		if(i > 30 || ReFlag == 1) {
-			if(Page == 0) { // Draw home page
-				Get_Current_Time(&sPaint_time);
-				Paint_ClearWindows(210, 40, 290, 100, BLACK);
-				Paint_DrawTime(212, 45, &sPaint_time, &Font24, WHITE, WHITE);
-				Paint_DrawDate(212, 80, &sPaint_time, &Font12, WHITE, WHITE);
-			}
-			
-			if(Page == 1 && SelfFlag != 1 && dis_lock != 1) {
-				memcpy(BlackImage_ASYNC, BlackImage, Imagesize);
-				dis_flag = 1;
-				
-				i = 0;
-				k = 0;
-				j++;
-				ReFlag = 0;
-				printf("*** Draw Refresh ***\r\n");
-			}
-			else if(!dis_lock){
-				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
-				
-				i = 0;
-				k = 0;
-				j++;
-				ReFlag = 0;
-				printf("*** Touch Refresh ***\r\n");
-			}
-		}else if(k++>50000000 && i>0 && Page == 1) { // Overtime Refresh
-			EPD_2IN9_V2_Display_Partial(BlackImage);
-			i = 0;
-			k = 0;
-			j++;
-			printf("*** Overtime Refresh ***\r\n");
-		}else if(j > 100 || SelfFlag) { // Self Refresh
-			SelfFlag = 0;
-			j = 0;
-			EPD_2IN9_V2_Init();
-			EPD_2IN9_V2_Display_Base(BlackImage);
-			printf("--- Self Refresh ---\r\n");
-		}
-		
-		// Refresh after a minute
-		if(Page == 0  && ReFlag == 0) {
-			Get_Current_Time(&sPaint_time_f);
-			if(sPaint_time_f.Min != sPaint_time.Min) {
-				ReFlag = 1;
-			}
-		}
-		
-		if(ICNT_Scan()==1 || (ICNT86_Dev_Now.X[0] == ICNT86_Dev_Old.X[0] && ICNT86_Dev_Now.Y[0] == ICNT86_Dev_Old.Y[0])) { // No new touch
-			// printf("%d %d \r\n", j, SelfFlag);
-			// printf("No new touch \r\n");
+		if(ICNT_Scan()==1 || (ICNT86_Dev_Now.X[0] == ICNT86_Dev_Old.X[0] && ICNT86_Dev_Now.Y[0] == ICNT86_Dev_Old.Y[0])) {
 			continue;
 		}
 
-		if(ICNT86_Dev_Now.TouchCount) {
-			i++;
-			if(Page == 0  && ReFlag == 0) {	//main menu
-				if(ICNT86_Dev_Now.X[0] > 119 && ICNT86_Dev_Now.X[0] < 152 && ICNT86_Dev_Now.Y[0] > 31 && ICNT86_Dev_Now.Y[0] < 96) {
-					printf("Photo ...\r\n");
-					Page = 2;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					Show_Photo_Small_2in9(Photo_S);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 39 && ICNT86_Dev_Now.X[0] < 80 && ICNT86_Dev_Now.Y[0] > 31 && ICNT86_Dev_Now.Y[0] < 96) {
-					printf("Draw ...\r\n");
-					Page = 1;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 && ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) {
-					Page = 4;
-					PlayBackBar = 1;
-				}
-			}
+		int oldPage = Page;
 
-			if(Page == 1 && ReFlag == 0) {	//white board
-				// Paint_DrawPoint(ICNT86_Dev_Now.X[0], ICNT86_Dev_Now.Y[0], BLACK, ICNT86_Dev_Now.P[0]/8+1, DOT_STYLE_DFT);
-				Paint_DrawPoint(ICNT86_Dev_Now.X[0], ICNT86_Dev_Now.Y[0], BLACK, 3, DOT_STYLE_DFT);
-				
-				if(ICNT86_Dev_Now.X[0] > 136 && ICNT86_Dev_Now.X[0] < 159 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) { // Return home
-					printf("Home ...\r\n");
-					Page = 0;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 266 && ICNT86_Dev_Now.X[0] < 289 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Clear ...\r\n");
-					Page = 1;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 5 && ICNT86_Dev_Now.X[0] < 27 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Refresh ...\r\n");
-					SelfFlag = 1;
-					ReFlag = 1;
-				}
-			}
-
-			if(Page == 2 && ReFlag == 0) {  //photo menu
-				if(ICNT86_Dev_Now.X[0] > 135 && ICNT86_Dev_Now.X[0] < 160 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Home ...\r\n");
-					Page = 0;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 203 && ICNT86_Dev_Now.X[0] < 224 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Next page ...\r\n");
-					Photo_S++;
-					if(Photo_S > 2)	// 9 photos is a maximum of three pages
-						Photo_S=0;
-					ReFlag = 2;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 71 && ICNT86_Dev_Now.X[0] < 92 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Last page ...\r\n");
-					if(Photo_S == 0)
-						printf("Top page ...\r\n");
-					else {
-						Photo_S--;
-						ReFlag = 2;
-					}
-				}
-				else if(ICNT86_Dev_Now.X[0] > 5 && ICNT86_Dev_Now.X[0] < 27 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Refresh ...\r\n");
-					SelfFlag = 1;
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 2 && ICNT86_Dev_Now.X[0] < 293 && ICNT86_Dev_Now.Y[0] > 2 && ICNT86_Dev_Now.Y[0] < 96 && ReFlag == 0) {
-					printf("Select photo ...\r\n");
-					Page = 3;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);		
-					Photo_L = ICNT86_Dev_Now.X[0]/96 + ICNT86_Dev_Now.Y[0]/48*3 + Photo_S*3 + 1;
-					Show_Photo_Large_2in9(Photo_L);
-					ReFlag = 1;
-				}
-				if(ReFlag == 2) { // Refresh small photo
-					ReFlag = 1;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					Show_Photo_Small_2in9(Photo_S);	// show small photo
-				}
-			}
-			
-			if(Page == 3 && ReFlag == 0) {	//view the photo
-				if(ICNT86_Dev_Now.X[0] > 268 && ICNT86_Dev_Now.X[0] < 289 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Photo menu ...\r\n");
-					Page = 2;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					Show_Photo_Small_2in9(Photo_S);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 203 && ICNT86_Dev_Now.X[0] < 224 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Next photo ...\r\n");
-					Photo_L++;
-					if(Photo_L > 9)
-						Photo_L=1;
-					ReFlag = 2;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 135 && ICNT86_Dev_Now.X[0] < 160 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Home ...\r\n");
-					Page = 0;
-					GUI_ReadBmp(PagePath_2in9[Page], 0, 0);
-					ReFlag = 1;
-				}
-				else if(ICNT86_Dev_Now.X[0] > 71 && ICNT86_Dev_Now.X[0] < 92 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Last page ...\r\n");
-					if(Photo_L == 1)
-						printf("Top photo ...\r\n");
-					else {
-						Photo_L--;
-						ReFlag = 2;
-					}
-				}
-				else if(ICNT86_Dev_Now.X[0] > 5 && ICNT86_Dev_Now.X[0] < 27 && ICNT86_Dev_Now.Y[0] > 101 && ICNT86_Dev_Now.Y[0] < 124) {
-					printf("Refresh photo ...\r\n");
-					SelfFlag = 1;
-					ReFlag = 1;
-				}
-				if(ReFlag == 2) {	// Refresh large photo
-					ReFlag = 1;
-					Show_Photo_Large_2in9(Photo_L);
-				}
-			}
-
-			//++++++++++++++++++++ Test
-			if(Page == 4 && ReFlag == 0) {	//Text test
-				printf("Testing text ...\r\n");
-
-				// Clear the screen
-				ClearWindows(WHITE);
-				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
-				ClearWindows(WHITE);
-				
-				DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK);
-
-				for ( int i = 0; i < 1; i++ ) {
-					DrawString_EN(10, 20 + i*20, "9876543210" + i, &Font20, WHITE, BLACK);
-				}
-
-				if ( PlayBackBar == 1 ) {
-					PlayBackBarBottom();
-				}
-
-
-				// Send buffer to display
-				EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
-				ReFlag = 1;
-			}
-			//++++++++++++++++++++ Test end
+		// Check touches and update Page
+		if(Page == 0) { 
+			if(ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
+			else if(ICNT86_Dev_Now.X[0] > 80 && ICNT86_Dev_Now.X[0] < 140) Page = 2;
+			else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
+			else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
+		} else if(Page >= 1 && Page <= 4) {
+			if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 &&
+			ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) Page = 0;
 		}
+
+		// Redraw only if page changed
+		if(Page != oldPage) {
+			ReFlag = 1;
+		}
+
+		if(ReFlag) {
+			switch(Page) {
+				case 0:
+					GUI_ReadBmp(whiteScreen, 0, 0);
+					GUI_ReadBmp(Songsbmp, 10, 30);
+					GUI_ReadBmp(Albumsbmp, 80, 30);
+					GUI_ReadBmp(Artistsbmp, 150, 30);
+					GUI_ReadBmp(Playlistbmp, 220, 30);
+					break;
+				case 1:
+					GUI_ReadBmp(whiteScreen, 0, 0);
+					GUI_ReadBmp(Songsbmp, 80, 40);
+					break;
+				case 2:
+					GUI_ReadBmp(whiteScreen, 0, 0);
+					GUI_ReadBmp(Albumsbmp, 80, 40);
+					break;
+				case 3:
+					GUI_ReadBmp(whiteScreen, 0, 0);
+					GUI_ReadBmp(Artistsbmp, 80, 40);
+					break;
+				case 4:
+					GUI_ReadBmp(whiteScreen, 0, 0);
+					GUI_ReadBmp(Playlistbmp, 80, 40);
+					break;
+			}
+			EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
+			ReFlag = 0;
+		}
+
+		// Update old touch
+		ICNT86_Dev_Old.X[0] = ICNT86_Dev_Now.X[0];
+		ICNT86_Dev_Old.Y[0] = ICNT86_Dev_Now.Y[0];
 	}
+
 	//---------------------------------
 	return 0;
 }
-//========================================
+//*****************************************************************************/
