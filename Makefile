@@ -43,22 +43,22 @@ ${TARGET}:${OBJ_O}
 $(shell mkdir -p $(DIR_BIN))
 
 ${DIR_BIN}/%.o:$(DIR_Examples)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_GUI)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_Draw) -I $(DIR_GUI)
     
 ${DIR_BIN}/%.o:$(DIR_Driver)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
 
 ${DIR_BIN}/%.o:$(DIR_EPD)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
     
 ${DIR_BIN}/%.o:$(DIR_FONTS)/%.c 
-	$(CC) $(CFLAGS) -c  $< -o $@ $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Draw) $(DEBUG)
 	
 ${DIR_BIN}/%.o:$(DIR_GUI)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
 	
 ${DIR_BIN}/%.o:$(DIR_Config)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ $(LIB)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Draw) $(LIB)
 
 ${DIR_BIN}/%.o:$(DIR_Draw)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_Draw) -I $(DIR_Config) -I $(DIR_GUI) -I $(DIR_EPD) -I $(DIR_Driver)

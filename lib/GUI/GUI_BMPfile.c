@@ -42,7 +42,7 @@
 ******************************************************************************/
 
 #include "GUI_BMPfile.h"
-#include "GUI_Paint.h"
+#include "paintScreen.h"
 #include "Debug.h"
 
 #include <fcntl.h>
@@ -52,6 +52,12 @@
 #include <string.h> //memset()
 #include <math.h> //memset()
 #include <stdio.h>
+
+#define WHITE          0xFF
+#define BLACK          0x00
+#define RED            BLACK
+
+PAINT Paint;
 
 UBYTE GUI_ReadBmp(const char *path, UWORD Xstart, UWORD Ystart)
 {
@@ -130,7 +136,7 @@ UBYTE GUI_ReadBmp(const char *path, UWORD Xstart, UWORD Ystart)
             }
             temp = Image[(x / 8) + (y * Image_Width_Byte)];
             color = (((temp << (x%8)) & 0x80) == 0x80) ?Bcolor:Wcolor;
-            Paint_SetPixel(Xstart + x, Ystart + y, color);
+            SetPixel(Xstart + x, Ystart + y, color);
         }
     }
     return 0;
@@ -197,7 +203,7 @@ UBYTE GUI_ReadBmp_4Gray(const char *path, UWORD Xstart, UWORD Ystart)
             }
             temp = Image[x/2 + y * bmpInfoHeader.biWidth/2] >> ((x%2)? 0:4);//0xf 0x8 0x7 0x0 
             color = temp>>2;                           //11  10  01  00  
-            Paint_SetPixel(Xstart + x, Ystart + y, color);
+            SetPixel(Xstart + x, Ystart + y, color);
         }
     }
     return 0;
@@ -277,7 +283,7 @@ UBYTE GUI_ReadBmp_RGB_7Color(const char *path, UWORD Xstart, UWORD Ystart)
             if(x > Paint.Width || y > Paint.Height) {
                 break;
             }
-            Paint_SetPixel(Xstart + x, Ystart + y, Image[bmpInfoHeader.biHeight *  bmpInfoHeader.biWidth - 1 -(bmpInfoHeader.biWidth-x-1+(y* bmpInfoHeader.biWidth))]);
+            SetPixel(Xstart + x, Ystart + y, Image[bmpInfoHeader.biHeight *  bmpInfoHeader.biWidth - 1 -(bmpInfoHeader.biWidth-x-1+(y* bmpInfoHeader.biWidth))]);
 		}
     }
     return 0;

@@ -17,6 +17,8 @@ char *Artistsbmp = "./pic/Artists.bmp";
 char *Playlistbmp = "./pic/Playlist.bmp";
 char *whiteScreen = "./pic/White_board.bmp";
 
+UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
+
 char *PhotoPath_S_2in9[10] = {"./pic/2in9/Photo_1_0.bmp",
 						"./pic/2in9/Photo_1_1.bmp", "./pic/2in9/Photo_1_2.bmp", "./pic/2in9/Photo_1_3.bmp", "./pic/2in9/Photo_1_4.bmp",
 						"./pic/2in9/Photo_1_5.bmp", "./pic/2in9/Photo_1_6.bmp", "./pic/2in9/Photo_1_7.bmp", "./pic/2in9/Photo_1_8.bmp",
@@ -119,25 +121,6 @@ void Show_Photo_Large_2in9(UBYTE large)
 }
 //========================================
 
-//========================================
-// This function gets the current time
-//========================================
-void Get_Current_Time(PAINT_TIME *pTime)
-{
-    time_t t;
-    struct tm *nowtime;
-    
-    time(&t);
-	nowtime = localtime(&t);
-	
-	pTime->Year = nowtime->tm_year + 1900;
-	pTime->Month = nowtime->tm_mon + 1;
-	pTime->Day = nowtime->tm_mday;
-	pTime->Hour = nowtime->tm_hour;
-	pTime->Min = nowtime->tm_min;
-}
-//========================================
-
 /******************************************************************************
 function: Draw the Playback bar at the bottom of the screen
 ******************************************************************************/
@@ -152,19 +135,85 @@ void PlayBackBarBottom( const char *song, int timeTotal, int timeNow ){
         for ( int i = 0 ; i < (int)(( (float)timeNow / timeTotal ) * 109) ; i++ ){
                 DrawLineVertical( 260, 10 + i, 265, BLACK, 1 );
         }
+
         DrawString_EN(10, 275, song, &Font20, WHITE, BLACK);
 
 }
 //*****************************************************************************/
 
 /******************************************************************************
-// This function is the main part
+function: Draw the main menu
+******************************************************************************/
+void PrintMainMenu(){
+
+    Clear(WHITE);
+    GUI_ReadBmp(Songsbmp, 30, 10);
+    GUI_ReadBmp(Albumsbmp, 30, 80);
+    GUI_ReadBmp(Artistsbmp, 30, 150);
+    GUI_ReadBmp(Playlistbmp, 30, 220);
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Draw the song menu
+******************************************************************************/
+void PrintSongMenu(){
+	
+    Clear(WHITE);
+
+	DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK); 
+	for ( int i = 0; i < 20; i++ ) { 
+		DrawString_EN(10, 20 + i*20, "9876543210ABCDEFH" + i, &Font20, WHITE, BLACK); 
+	} 
+	
+	if ( PlayBackBar == 1 ) { 
+		PlayBackBarBottom("Current Song", 380, 50); 
+	}
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Draw the Album menu
+******************************************************************************/
+void PrintAlbumMenu(){
+	
+    Clear(WHITE);
+	GUI_ReadBmp(Albumsbmp, 40, 80);
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Draw the Artist menu
+******************************************************************************/
+void PrintArtistMenu(){
+	
+    Clear(WHITE);
+	GUI_ReadBmp(Artistsbmp, 40, 80);
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Draw the Artist menu
+******************************************************************************/
+void PrintPlaylisttMenu(){
+	
+    Clear(WHITE);
+	GUI_ReadBmp(Playlistbmp, 40, 80);
+
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: This function is the main part
 ******************************************************************************/
 int TestCode_2in9(void)
 {
 	IIC_Address = 0x48;
     
-    UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
     UBYTE Page = 0;
     UBYTE ReFlag = 0;
     
@@ -188,16 +237,12 @@ int TestCode_2in9(void)
     }
 
     // Initialize image
-    Paint_NewImage(BlackImage, EPD_2IN9_V2_WIDTH, EPD_2IN9_V2_HEIGHT, 90, WHITE);
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
+    NewImage(BlackImage, EPD_2IN9_V2_WIDTH, EPD_2IN9_V2_HEIGHT, 90, WHITE);
+    SelectImage(BlackImage);
+    Clear(WHITE);
 
     // Only draw the main menu at startup
-    GUI_ReadBmp(whiteScreen, 0, 0);
-    GUI_ReadBmp(Songsbmp, 10, 30);
-    GUI_ReadBmp(Albumsbmp, 80, 30);
-    GUI_ReadBmp(Artistsbmp, 150, 30);
-    GUI_ReadBmp(Playlistbmp, 220, 30);
+    PrintMainMenu();
 
     // Send to display
     EPD_2IN9_V2_Display_Base(BlackImage);
@@ -222,8 +267,15 @@ int TestCode_2in9(void)
 			else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
 			else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
 		} else if(Page >= 1 && Page <= 4) {
-			if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280 &&
-			ICNT86_Dev_Now.Y[0] > 0 && ICNT86_Dev_Now.Y[0] < 130) Page = 0;
+			if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280) Page = 0;
+			else if(ICNT86_Dev_Now.X[0] > 0 && ICNT86_Dev_Now.X[0] < 80 && PlayBackBar == 1) {
+				PlayBackBar = 0;
+				ReFlag = 1;
+			} 
+			else if(ICNT86_Dev_Now.X[0] > 0 && ICNT86_Dev_Now.X[0] < 80 && PlayBackBar == 0) {
+				PlayBackBar = 1;
+				ReFlag = 1;
+			}
 		}
 
 		// Redraw only if page changed
@@ -234,27 +286,19 @@ int TestCode_2in9(void)
 		if(ReFlag) {
 			switch(Page) {
 				case 0:
-					GUI_ReadBmp(whiteScreen, 0, 0);
-					GUI_ReadBmp(Songsbmp, 10, 30);
-					GUI_ReadBmp(Albumsbmp, 80, 30);
-					GUI_ReadBmp(Artistsbmp, 150, 30);
-					GUI_ReadBmp(Playlistbmp, 220, 30);
+					PrintMainMenu();
 					break;
-				case 1:
-					GUI_ReadBmp(whiteScreen, 0, 0);
-					GUI_ReadBmp(Songsbmp, 80, 40);
+				case 1:	
+					PrintSongMenu();
 					break;
 				case 2:
-					GUI_ReadBmp(whiteScreen, 0, 0);
-					GUI_ReadBmp(Albumsbmp, 80, 40);
+					PrintAlbumMenu();
 					break;
 				case 3:
-					GUI_ReadBmp(whiteScreen, 0, 0);
-					GUI_ReadBmp(Artistsbmp, 80, 40);
+					PrintArtistMenu();
 					break;
 				case 4:
-					GUI_ReadBmp(whiteScreen, 0, 0);
-					GUI_ReadBmp(Playlistbmp, 80, 40);
+					PrintPlaylisttMenu();
 					break;
 			}
 			EPD_2IN9_V2_Display_Partial_Wait(BlackImage);

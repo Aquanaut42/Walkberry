@@ -50,6 +50,24 @@
 
 #include "DEV_Config.h"
 
+/**
+ * Image attributes
+**/
+typedef struct {
+    UBYTE *Image;
+    UWORD Width;
+    UWORD Height;
+    UWORD WidthMemory;
+    UWORD HeightMemory;
+    UWORD Color;
+    UWORD Rotate;
+    UWORD Mirror;
+    UWORD WidthByte;
+    UWORD HeightByte;
+    UWORD Scale;
+} PAINT;
+extern PAINT Paint;
+
 /*Bitmap file header   14bit*/
 typedef struct BMP_FILE_HEADER {
     UWORD bType;        //File identifier

@@ -33,3 +33,7 @@ void ClearSquare( int Xstart, int Ystart, int Xend, int Yend, UWORD Color );
 void DrawLine(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend, UWORD Color, int Line_width, int Line_Style);
 void DrawLineVertical(UWORD Ystart, UWORD X, UWORD Yend, UWORD Color, int Line_width);
 void DrawLineHorizontal(UWORD Xstart, UWORD Y, UWORD Xend, UWORD Color, int Line_width);
+
+void NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD Color);
+void SelectImage(UBYTE *image);
+void Clear(UWORD Color);

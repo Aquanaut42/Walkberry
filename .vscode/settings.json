@@ -3,6 +3,7 @@
         "stdlib.h": "c",
         "paintscreen.h": "c",
         "dev_config.h": "c",
-        "functional": "c"
+        "functional": "c",
+        "math.h": "c"
     }
 }

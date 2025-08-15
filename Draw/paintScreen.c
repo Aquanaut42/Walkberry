@@ -8,9 +8,9 @@
 ******************************************************************************/
 
 #include "paintScreen.h"
+#include "GUI_BMPfile.h"
 #include <DEV_Config.h>
 #include "../Fonts/fonts.h"
-#include "GUI_Paint.h"
 
 
 /******************************************************************************
@@ -48,8 +48,8 @@ Returns:
 int SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 {   
     
-    if ( Xpoint > Paint.Height || Xpoint < 0 || 
-         Ypoint > Paint.Width || Ypoint < 0) {
+    if ( Xpoint > Paint.Width || Xpoint < 0 || 
+         Ypoint > Paint.Height || Ypoint < 0) {
         return -1;
     }
     if(Paint.Scale == 2){
@@ -93,8 +93,8 @@ int DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 {
     UWORD Page, Column;
 
-    if ( (Xpoint + Font->Height) > Paint.Height || Xpoint < 0|| 
-         (Ypoint + Font->Width) > Paint.Width || Ypoint < 0) {
+    if ( (Xpoint + Font->Height) > Paint.Width || Xpoint < 0|| 
+         (Ypoint + Font->Width) > Paint.Height || Ypoint < 0) {
         return -1;
     }
 
@@ -154,10 +154,10 @@ void DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
 
     while (* pString != '\0') {
         //if it's out of bounds, return
-        if (Xpoint > Paint.Height || Xpoint < 0) {
+        if (Xpoint > Paint.Width || Xpoint < 0) {
             return;
         }
-        if (Ypoint > Paint.Width || Ypoint < 0) {
+        if (Ypoint > Paint.Height || Ypoint < 0) {
             return;
         }
         if (DrawChar(Xpoint, Ypoint, * pString, Font, Color_Background, Color_Foreground) == -1) {
@@ -180,8 +180,8 @@ parameter:
 ******************************************************************************/
 void ClearWindows( UWORD Color )
 {
-    for (int Y = 0; Y < Paint.Width; Y++) {
-        for ( int X = 0; X < Paint.Height; X++) {
+    for (int Y = 0; Y < Paint.Height; Y++) {
+        for ( int X = 0; X < Paint.Width; X++) {
             if (SetPixel(X, Y, Color) == -1) {
                 return;
             }
@@ -247,5 +247,69 @@ void DrawLineVertical(UWORD Ystart, UWORD X, UWORD Yend, UWORD Color, int Line_w
             SetPixel( X + j, i, Color);
         }
     }
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Create Image
+parameter:
+    image   :   Pointer to the image cache
+    width   :   The width of the picture
+    Height  :   The height of the picture
+    Color   :   Whether the picture is inverted
+******************************************************************************/
+void NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD Color)
+{
+    Paint.Image = NULL;
+    Paint.Image = image;
+
+    Paint.WidthMemory = Width;
+    Paint.HeightMemory = Height;
+    Paint.Color = Color;    
+    Paint.Scale = 2;
+    Paint.WidthByte = (Width % 8 == 0)? (Width / 8 ): (Width / 8 + 1);
+    Paint.HeightByte = Height;    
+//    printf("WidthByte = %d, HeightByte = %d\r\n", Paint.WidthByte, Paint.HeightByte);
+//    printf(" EPD_WIDTH / 8 = %d\r\n",  122 / 8);
+   
+    Paint.Width = Width;
+    Paint.Height = Height;
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Select Image
+parameter:
+    image : Pointer to the image cache
+******************************************************************************/
+void SelectImage(UBYTE *image)
+{
+    Paint.Image = image;
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Clear the color of the picture
+parameter:
+    Color : Painted colors
+******************************************************************************/
+void Clear(UWORD Color)
+{	
+	if(Paint.Scale == 2 || Paint.Scale == 4){
+		for (UWORD Y = 0; Y < Paint.HeightByte; Y++) {
+			for (UWORD X = 0; X < Paint.WidthByte; X++ ) {//8 pixel =  1 byte
+				UDOUBLE Addr = X + Y*Paint.WidthByte;
+				Paint.Image[Addr] = Color;
+			}
+		}		
+	}else if(Paint.Scale == 7){
+		for (UWORD Y = 0; Y < Paint.HeightByte; Y++) {
+			for (UWORD X = 0; X < Paint.WidthByte; X++ ) {
+				UDOUBLE Addr = X + Y*Paint.WidthByte;
+				Paint.Image[Addr] = (Color<<4)|Color;
+			}
+		}		
+	}
+
 }
 //*****************************************************************************/
