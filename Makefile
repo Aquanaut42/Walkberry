@@ -6,6 +6,7 @@ DIR_EPD		 = ./lib/EPD
 DIR_Examples = ./
 DIR_BIN      = ./bin
 DIR_Draw	 = ./Draw
+DIR_MusicControl = ./MusicControl
 
 OBJ_C = $(wildcard ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_Examples}/*.c ${DIR_FONTS}/*.c ${DIR_Draw}/*.c )
 OBJ_O = $(patsubst %.c,${DIR_BIN}/%.o,$(notdir ${OBJ_C}))
@@ -43,25 +44,25 @@ ${TARGET}:${OBJ_O}
 $(shell mkdir -p $(DIR_BIN))
 
 ${DIR_BIN}/%.o:$(DIR_Examples)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_Draw) -I $(DIR_GUI)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_Draw) -I $(DIR_GUI)
     
 ${DIR_BIN}/%.o:$(DIR_Driver)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
 
 ${DIR_BIN}/%.o:$(DIR_EPD)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
     
 ${DIR_BIN}/%.o:$(DIR_FONTS)/%.c 
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Draw) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) $(DEBUG)
 	
 ${DIR_BIN}/%.o:$(DIR_GUI)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
 	
 ${DIR_BIN}/%.o:$(DIR_Config)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Draw) $(LIB)
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) $(LIB)
 
 ${DIR_BIN}/%.o:$(DIR_Draw)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_Draw) -I $(DIR_Config) -I $(DIR_GUI) -I $(DIR_EPD) -I $(DIR_Driver)
+	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) -I $(DIR_Config) -I $(DIR_GUI) -I $(DIR_EPD) -I $(DIR_Driver)
 
 
 	

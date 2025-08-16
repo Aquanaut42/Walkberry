@@ -6,9 +6,7 @@
 #include <pthread.h>	//pthread_create()
 #include "GUI_BMPfile.h"
 
-int TestCode_2in13(void);
-int TestCode_2in13_V3(void);
-int TestCode_2in13_V4(void);
-int TestCode_2in9(void);
+int ScreenSetup();
+int UpdateScreen();
 
 #endif
