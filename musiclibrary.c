@@ -61,9 +61,10 @@ static void add_song(MusicLibrary *lib, const char *fullpath, const char *filena
     if (ext) *ext = '\0';
 
     char *title_start = namebuf;
+    /*
     while (*title_start && isdigit((unsigned char)*title_start)) {
         title_start++;
-    }
+    }*/
     while (*title_start == '-' || *title_start == '_' || *title_start == ' ') {
         title_start++;
     }

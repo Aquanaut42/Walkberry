@@ -12,6 +12,7 @@ static pthread_t t1, t2;
 UBYTE flag_2in9=1, dis_lock=1, dis_flag=1;	
 UBYTE *BlackImage, *BlackImage_ASYNC;
 
+// Pictures path
 char *Songsbmp = "./pic/Songs.bmp";
 char *Albumsbmp = "./pic/Albums.bmp";
 char *Artistsbmp = "./pic/Artists.bmp";
@@ -19,10 +20,10 @@ char *Playlistbmp = "./pic/Playlist.bmp";
 char *whiteScreen = "./pic/White_board.bmp";
 
 UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
-UBYTE ReFlag = 0;
 
-static char current_artist[FIELD_SIZE] = "";
-static char current_album[FIELD_SIZE] = "";
+// Current selections for filtering
+char current_artist[FIELD_SIZE] = "";
+char current_album[FIELD_SIZE] = "";
 
 /******************************************************************************
 // This function is made so the software closes when i press "ctrl + c"
@@ -49,7 +50,6 @@ void *pthread_irq_2in9(void *arg)
 	while(flag_2in9) {
 		if(DEV_Digital_Read(INT) == 0) {
 			ICNT86_Dev_Now.Touch = 1;
-			// printf("!");
 		}
 		else {
 			ICNT86_Dev_Now.Touch = 0;
@@ -106,6 +106,133 @@ void PlayBackBarBottom( const char *song, int timeTotal, int timeNow ){
 //*****************************************************************************/
 
 /******************************************************************************
+function: Builds the unique album and artist list from the music library
+******************************************************************************/
+/* shared album storage used by both printing and touch check */
+static char album_list[512][FIELD_SIZE];
+static int album_count = 0;
+
+/* Build unique album list from lib, safe checks */
+void build_album_list(const MusicLibrary *lib) {
+    album_count = 0;
+
+    if (lib == NULL) {
+        printf("build_album_list: lib is NULL\n");
+        return;
+    }
+    if (lib->songs == NULL) {
+        printf("build_album_list: lib->songs is NULL\n");
+        return;
+    }
+
+    for (size_t i = 0; i < lib->count; i++) {
+        const char *alb = lib->songs[i].album;
+        if (alb == NULL || alb[0] == '\0') continue; // skip empty
+        /* avoid overflow of single album name */
+        for (int j = 0; j < album_count; j++) {
+            if (strncmp(alb, album_list[j], FIELD_SIZE) == 0) { // compare safely
+                alb = NULL; // mark as seen
+                break;
+            }
+        }
+        if (alb == NULL) continue;
+        if (album_count < 512) {
+            strncpy(album_list[album_count], lib->songs[i].album, FIELD_SIZE - 1);
+            album_list[album_count][FIELD_SIZE - 1] = '\0';
+            album_count++;
+        } else {
+            break; // reached capacity
+        }
+    }
+}
+void build_album_list_ByArtist(const MusicLibrary *lib) {
+    album_count = 0;
+
+    if (lib == NULL) {
+        printf("build_album_list: lib is NULL\n");
+        return;
+    }
+    if (lib->songs == NULL) {
+        printf("build_album_list: lib->songs is NULL\n");
+        return;
+    }
+
+    for (size_t i = 0; i < lib->count; i++) {
+        const char *alb = lib->songs[i].album;
+        const char *art = lib->songs[i].artist;
+
+        // skip empty album names
+        if (alb == NULL || alb[0] == '\0') continue;
+
+        // filter: only include albums for current_artist (if set)
+        if (current_artist[0] != '\0') {  
+            if (art == NULL || strcmp(art, current_artist) != 0) {
+                continue; // skip albums not matching current_artist
+            }
+        }
+
+        // avoid duplicates
+        int duplicate = 0;
+        for (int j = 0; j < album_count; j++) {
+            if (strncmp(alb, album_list[j], FIELD_SIZE) == 0) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) continue;
+
+        // add album
+        if (album_count < 512) {
+            strncpy(album_list[album_count], alb, FIELD_SIZE - 1);
+            album_list[album_count][FIELD_SIZE - 1] = '\0';
+            album_count++;
+            printf("%s\n", alb); // debug print
+        } else {
+            break; // reached capacity
+        }
+    }
+}
+
+
+static char artist_list[512][FIELD_SIZE];
+static int artist_count = 0;
+
+/* Build unique artist list from lib, safe checks */
+void build_artist_list(const MusicLibrary *lib) {
+    artist_count = 0;
+
+    if (lib == NULL) {
+        printf("build_artist_list: lib is NULL\n");
+        return;
+    }
+    if (lib->songs == NULL) {
+        printf("build_artist_list: lib->songs is NULL\n");
+        return;
+    }
+
+    for (size_t i = 0; i < lib->count; i++) {
+        const char *alb = lib->songs[i].artist;
+        if (alb == NULL || alb[0] == '\0') continue; // skip empty
+        /* avoid overflow of single artist name */
+        for (int j = 0; j < artist_count; j++) {
+            if (strncmp(alb, artist_list[j], FIELD_SIZE) == 0) { // compare safely
+                alb = NULL; // mark as seen
+                break;
+            }
+        }
+        if (alb == NULL) continue;
+        if (artist_count < 512) {
+            strncpy(artist_list[artist_count], lib->songs[i].artist, FIELD_SIZE - 1);
+            artist_list[artist_count][FIELD_SIZE - 1] = '\0';
+            artist_count++;
+        } else {
+            break; // reached capacity
+        }
+    }
+}
+//*****************************************************************************/
+
+/******************************************************************************
 function: Draw the main menu
 ******************************************************************************/
 void PrintMainMenu(){
@@ -116,78 +243,221 @@ void PrintMainMenu(){
     GUI_ReadBmp(Artistsbmp, 30, 150);
     GUI_ReadBmp(Playlistbmp, 30, 220);
 
+	// Reset current selections
+	current_artist[FIELD_SIZE - 1] = '\0';
+	current_album[FIELD_SIZE - 1] = '\0';
+
 }
 //*****************************************************************************/
 
 /******************************************************************************
 function: Draw the song menu
 ******************************************************************************/
+typedef struct {
+    const char *title;
+    int track_no;
+} SongEntry;
+
+int parse_track_number(const char *title) {
+    if (!title) return 9999; // push untitled to end
+    char *endptr;
+    int num = strtol(title, &endptr, 10);
+    if (endptr == title) return 9999; // no number at start
+    return num;
+}
+
+int compare_songentry(const void *a, const void *b) {
+    const SongEntry *sa = (const SongEntry*)a;
+    const SongEntry *sb = (const SongEntry*)b;
+    return sa->track_no - sb->track_no;
+}
+
 void PrintSongMenu(const MusicLibrary *lib, int scroll){
 	
     Clear(WHITE);
+	if (lib == NULL) return;
+    if (lib->songs == NULL) return;
 
-	DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK); 
+	SongEntry album_songs[512]; // Temporary storage for songs
+	int song_count = 0;
 
-	int start = scroll * 10;
-	int end = start + 15;
-	if(end > lib->count) end = lib->count;
+    if (current_album[0] == '\0') { // if no album selected, show all songs
 
-	for (int i = start; i < end; i++) {
-		int y = 30 + (i - start) * 20; // start below header
-		DrawString_EN(10, y, lib->songs[i].title, &Font20, WHITE, BLACK);
+		// print "Songs" as header
+        DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK); 
+
+		// collect all songs
+		for (size_t i = 0; i < lib->count; i++) {
+			if ( lib->songs[i].album ) { // skip songs with no album (should not happen)
+				album_songs[song_count].title = lib->songs[i].title ? lib->songs[i].title : "(untitled)"; // parse the title (plus safe check)
+				album_songs[song_count].track_no = parse_track_number(album_songs[song_count].title); // parse track number
+				song_count++;
+			}
+		}
+
+    } else {	// If an album is selected, show songs from that album only
+		
+		// Print the album name as header
+		char header[FIELD_SIZE * 2];
+		snprintf(header, sizeof(header), "%s", current_album);
+		DrawString_EN(1, 1, header, &Font24, WHITE, BLACK); 
+
+		// collect songs from current_album
+		for (size_t i = 0; i < lib->count; i++) {
+			if (lib->songs[i].album && strcmp(lib->songs[i].album, current_album) == 0) { // skip songs that aren't in the current_album and has no album (should not happen)
+				album_songs[song_count].title = lib->songs[i].title ? lib->songs[i].title : "(untitled)"; // parse the title (plus safe check)
+				album_songs[song_count].track_no = parse_track_number(album_songs[song_count].title); // parse track number
+				song_count++;
+			}
+		}
+		
 	}
-	
+
+	qsort(album_songs, song_count, sizeof(SongEntry), compare_songentry); // sort by track number
+
+    // Pagination logic (rows per page = 10)
+    int rows_per_page = 10;
+    int start_index = scroll * rows_per_page;
+    int end_index = start_index + rows_per_page;
+    if (end_index > song_count) end_index = song_count;
+
+    if (song_count == 0) { // nothing to draw, placeholder
+    	DrawString_EN(10, 30, "(no songs)", &Font20, WHITE, BLACK);
+	} else { // draw each song title
+		for (int i = start_index; i < end_index; i++) {
+
+			int y = 30 + (i - start_index) * 20;
+			const char *title = album_songs[i].title;
+			if (title && strlen(title) > 3) {
+				title += 3; // skip first 3 characters
+			}
+			DrawString_EN(10, y, title, &Font20, WHITE, BLACK);
+		}
+	}
+
+	// The playback bar at the bottom of the screen
 	if ( PlayBackBar == 1 ) { 
 		PlayBackBarBottom("Current Song", 380, 50); 
 	}
-
 }
-//*****************************************************************************/
+//****************************************************************************/
 
 /******************************************************************************
 function: Draw the Album menu
 ******************************************************************************/
 void PrintAlbumMenu(const MusicLibrary *lib, int scroll) {
-    Clear(WHITE);
 
-    DrawString_EN(1, 1, "Albums", &Font24, WHITE, BLACK);
+	Clear(WHITE);
+	if (lib == NULL) return;
+    if (lib->songs == NULL) return;
 
-    // Temporary storage for unique albums
-    char albums[512][FIELD_SIZE];  // adjust size if needed
-    int album_count = 0;
+    if (current_artist[0] == '\0') { // if no artist selected, show all albums
 
-    // Collect unique albums
-    for (size_t i = 0; i < lib->count; i++) {
-        int seen = 0;
-        for (int j = 0; j < album_count; j++) {
-            if (strcmp(lib->songs[i].album, albums[j]) == 0) {
-                seen = 1;
-                break;
-            }
-        }
-        if (seen == 0 && album_count < 512) {
-            strncpy(albums[album_count], lib->songs[i].album, FIELD_SIZE - 1);
-            albums[album_count][FIELD_SIZE - 1] = '\0';
-            album_count++;
-        }
+		build_album_list(lib); // Refresh album list
+		DrawString_EN(1, 1, "Albums", &Font24, WHITE, BLACK);
+
+		// Pagination logic (rows per page = 15)
+		int rows_per_page = 15;
+		int start = scroll * rows_per_page;
+		int end = start + rows_per_page;
+		if (start >= album_count) {
+			// nothing to draw
+			DrawString_EN(10, 30, "(no albums)", &Font20, WHITE, BLACK);
+			return;
+		}
+		if (end > album_count) end = album_count;
+
+		for (int i = start; i < end; i++) {
+			int y = 30 + (i - start) * 20; // start below header
+			DrawString_EN(10, y, album_list[i], &Font20, WHITE, BLACK);
+		}
+		
+		if ( PlayBackBar == 1 ) { 
+			PlayBackBarBottom("Current Song", 380, 50); 
+		}
+        return;
     }
+	// -------- artist mode -------- (albums from current_artist only)
+	build_album_list_ByArtist(lib); // Refresh album list with artist filter
 
-    // Pagination logic
-    int start = scroll * 10;
-    int end = start + 15;
-    if (end > album_count) end = album_count;
+    char header[FIELD_SIZE * 2];
+    snprintf(header, sizeof(header), "%s", current_artist);
+    DrawString_EN(1, 1, header, &Font24, WHITE, BLACK);
 
-    // Draw albums
-    for (int i = start; i < end; i++) {
-        int y = 30 + (i - start) * 20; // start below header
-        char buf[FIELD_SIZE * 2];
-        snprintf(buf, sizeof(buf), "%s", albums[i]);
-        DrawString_EN(10, y, buf, &Font20, WHITE, BLACK);
-    }
+	// Pagination logic (rows per page = 15)
+	int rows_per_page = 15;
+	int start = scroll * rows_per_page;
+	int end = start + rows_per_page;
+	if (start >= album_count) {
+		// nothing to draw
+		DrawString_EN(10, 30, "(no albums)", &Font20, WHITE, BLACK);
+		return;
+	}
+	if (end > album_count) end = album_count;
 
-    if (PlayBackBar == 1) {
-        PlayBackBarBottom("Current Album", 380, 50);
-    }
+	for (int i = start; i < end; i++) {
+		int y = 30 + (i - start) * 20; // start below header
+		DrawString_EN(10, y, album_list[i], &Font20, WHITE, BLACK);
+	}
+		
+	if ( PlayBackBar == 1 ) { 
+		PlayBackBarBottom("Current Song", 380, 50); 
+	}
+    return;
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Check the Album menu for touches and update if needed
+******************************************************************************/
+void CheckAlbumMenu(const MusicLibrary *lib, int scroll) {
+
+    int rows_per_page = 15;
+    int start = scroll * rows_per_page;
+
+    int x = ICNT86_Dev_Now.X[0]; // touch X coordinate
+
+    // quick sanity check on coordinates (adjust depending on your screen orientation)
+    if (x < 30) return; // touched header or above
+
+    int row = (x - 30) / 20; // 0-based row on page
+    if (row < 0 || row >= rows_per_page) return;
+
+    int actual_index = start + row;
+    if (actual_index < 0 || actual_index >= album_count) return;
+
+    // copy into current_album safely
+    strncpy(current_album, album_list[actual_index], FIELD_SIZE - 1);
+    
+    printf("CheckAlbumMenu: selected album index=%d name='%s' (y=%d)\n",
+           actual_index, current_album, x);
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: Check the Artist menu for touches and update if needed
+******************************************************************************/
+void CheckArtistMenu(const MusicLibrary *lib, int scroll) {
+
+    int rows_per_page = 15;
+    int start = scroll * rows_per_page;
+
+    int x = ICNT86_Dev_Now.X[0]; // touch X coordinate
+
+    // quick sanity check on coordinates (adjust depending on your screen orientation)
+    if (x < 30) return; // touched header or above
+
+    int row = (x - 30) / 20; // 0-based row on page
+    if (row < 0 || row >= rows_per_page) return;
+
+    int actual_index = start + row;
+    if (actual_index < 0 || actual_index >= artist_count) return;
+
+    // copy into current_artist safely
+    strncpy(current_artist, artist_list[actual_index], FIELD_SIZE - 1);
+    
+    printf("CheckArtistMenu: selected artist index=%d name='%s' (y=%d)\n",
+           actual_index, current_artist, x);
 }
 //*****************************************************************************/
 
@@ -303,7 +573,7 @@ int ScreenSetup() {
 /******************************************************************************
 function: This updates the page select in the main menu
 ******************************************************************************/
-int ChechMenu(int Page)
+int ChechMenu(const MusicLibrary *lib, int scroll, int Page)
 {
 	
 	if(ICNT_Scan()==1 || (ICNT86_Dev_Now.X[0] == ICNT86_Dev_Old.X[0] && 
@@ -312,11 +582,31 @@ int ChechMenu(int Page)
 	}
 
 	// Check touches and update Page
-	if(Page == 0) { // If it's in the main menu
-		if(ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
-		else if(ICNT86_Dev_Now.X[0] > 80 && ICNT86_Dev_Now.X[0] < 140) Page = 2;
-		else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
-		else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
+	switch(Page) {
+		case 0: // If it's in the main menu
+			if(ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
+			else if(ICNT86_Dev_Now.X[0] > 80 && ICNT86_Dev_Now.X[0] < 140) Page = 2;
+			else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
+			else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
+			break;
+		case 1:	
+			//PrintSongMenu(lib, scroll);
+			break;
+		case 2: // Album menu
+			CheckAlbumMenu(lib, scroll);
+			if (current_album[0] != '\0') {
+				Page = 1; // show songs for selected album
+			}
+			break;
+		case 3: // Artist menu
+			CheckArtistMenu(lib, scroll);
+			if (current_artist[0] != '\0') {
+				Page = 2; // show albums for selected artist
+			}
+			break;
+		case 4:
+			//PrintPlaylisttMenu();
+			break;
 	}
 
 	// Update old touch
@@ -335,6 +625,8 @@ int UpdateScreen(const MusicLibrary *lib, int scroll, int Page)
 
 	switch(Page) {
 		case 0:
+		    current_album[0] = '\0';
+		    current_artist[0] = '\0';
 			PrintMainMenu();
 			break;
 		case 1:	

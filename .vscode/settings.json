@@ -67,6 +67,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "filesystem": "cpp",
-        "musiclibrary.hpp": "c"
+        "musiclibrary.hpp": "c",
+        "musiclibrary.h": "c"
     }
 }
