@@ -21,6 +21,9 @@ char *whiteScreen = "./pic/White_board.bmp";
 UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
 UBYTE ReFlag = 0;
 
+static char current_artist[FIELD_SIZE] = "";
+static char current_album[FIELD_SIZE] = "";
+
 /******************************************************************************
 // This function is made so the software closes when i press "ctrl + c"
 ******************************************************************************/
@@ -151,24 +154,20 @@ void PrintAlbumMenu(const MusicLibrary *lib, int scroll) {
 
     // Temporary storage for unique albums
     char albums[512][FIELD_SIZE];  // adjust size if needed
-    char artists[512][FIELD_SIZE]; // parallel array for artist
     int album_count = 0;
 
     // Collect unique albums
     for (size_t i = 0; i < lib->count; i++) {
-        bool seen = false;
+        int seen = 0;
         for (int j = 0; j < album_count; j++) {
-            if (strcmp(lib->songs[i].album, albums[j]) == 0 &&
-                strcmp(lib->songs[i].artist, artists[j]) == 0) {
-                seen = true;
+            if (strcmp(lib->songs[i].album, albums[j]) == 0) {
+                seen = 1;
                 break;
             }
         }
-        if (!seen && album_count < 512) {
+        if (seen == 0 && album_count < 512) {
             strncpy(albums[album_count], lib->songs[i].album, FIELD_SIZE - 1);
             albums[album_count][FIELD_SIZE - 1] = '\0';
-            strncpy(artists[album_count], lib->songs[i].artist, FIELD_SIZE - 1);
-            artists[album_count][FIELD_SIZE - 1] = '\0';
             album_count++;
         }
     }
@@ -182,7 +181,7 @@ void PrintAlbumMenu(const MusicLibrary *lib, int scroll) {
     for (int i = start; i < end; i++) {
         int y = 30 + (i - start) * 20; // start below header
         char buf[FIELD_SIZE * 2];
-        snprintf(buf, sizeof(buf), "%s (%s)", albums[i], artists[i]);
+        snprintf(buf, sizeof(buf), "%s", albums[i]);
         DrawString_EN(10, y, buf, &Font20, WHITE, BLACK);
     }
 
@@ -190,19 +189,53 @@ void PrintAlbumMenu(const MusicLibrary *lib, int scroll) {
         PlayBackBarBottom("Current Album", 380, 50);
     }
 }
-
 //*****************************************************************************/
 
 /******************************************************************************
 function: Draw the Artist menu
 ******************************************************************************/
-void PrintArtistMenu(){
+void PrintArtistMenu(const MusicLibrary *lib, int scroll){
 	
     Clear(WHITE);
 
 	DrawString_EN(1, 1, "Artists", &Font24, WHITE, BLACK); 
 
-	GUI_ReadBmp(Artistsbmp, 40, 80);
+	// Temporary storage for unique artist
+    char artists[512][FIELD_SIZE]; // parallel array for artist
+    int artist_count = 0;
+
+    // Collect unique albums
+    for (size_t i = 0; i < lib->count; i++) {
+        int seen = 0;
+        for (int j = 0; j < artist_count; j++) {
+            if (strcmp(lib->songs[i].artist, artists[j]) == 0) {
+                seen = 1;
+                break;
+            }
+        }
+        if (seen == 0 && artist_count < 512) {
+            strncpy(artists[artist_count], lib->songs[i].artist, FIELD_SIZE - 1);
+            artists[artist_count][FIELD_SIZE - 1] = '\0';
+            artist_count++;
+        }
+    }
+
+    // Pagination logic
+    int start = scroll * 10;
+    int end = start + 15;
+    if (end > artist_count) end = artist_count;
+
+    // Draw albums
+    for (int i = start; i < end; i++) {
+        int y = 30 + (i - start) * 20; // start below header
+        char buf[FIELD_SIZE * 2];
+        snprintf(buf, sizeof(buf), "%s", artists[i]);
+        DrawString_EN(10, y, buf, &Font20, WHITE, BLACK);
+    }
+
+    if (PlayBackBar == 1) {
+        PlayBackBarBottom("Current Album", 380, 50);
+    }
 
 }
 //*****************************************************************************/
@@ -308,10 +341,10 @@ int UpdateScreen(const MusicLibrary *lib, int scroll, int Page)
 			PrintSongMenu(lib, scroll);
 			break;
 		case 2:
-			PrintAlbumMenu();
+			PrintAlbumMenu(lib, scroll);
 			break;
 		case 3:
-			PrintArtistMenu();
+			PrintArtistMenu(lib, scroll);
 			break;
 		case 4:
 			PrintPlaylisttMenu();

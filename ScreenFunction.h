@@ -5,6 +5,7 @@
 #include <signal.h>     //signal()
 #include <pthread.h>	//pthread_create()
 #include "GUI_BMPfile.h"
+#include "musiclibrary.h"
 
 int ScreenSetup();
 int ChechMenu(Page);
