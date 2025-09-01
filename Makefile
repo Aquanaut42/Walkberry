@@ -6,7 +6,7 @@ DIR_EPD		 = ./lib/EPD
 DIR_Examples = ./
 DIR_BIN      = ./bin
 DIR_Draw	 = ./Draw
-DIR_MusicControl = ./MusicControl
+DIR_MusicControl = ./
 
 OBJ_C = $(wildcard ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_Examples}/*.c ${DIR_FONTS}/*.c ${DIR_Draw}/*.c )
 OBJ_O = $(patsubst %.c,${DIR_BIN}/%.o,$(notdir ${OBJ_C}))

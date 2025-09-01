@@ -7,6 +7,7 @@
 #include "GUI_BMPfile.h"
 
 int ScreenSetup();
-int UpdateScreen();
+int ChechMenu(Page);
+int UpdateScreen(const MusicLibrary *lib, int scroll, int Page);
 
 #endif

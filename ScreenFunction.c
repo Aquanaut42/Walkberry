@@ -4,6 +4,7 @@
 #include "time.h"
 #include "Draw/paintScreen.h"
 #include "../Fonts/fonts.h"
+#include "musiclibrary.h"
 
 extern ICNT86_Dev ICNT86_Dev_Now, ICNT86_Dev_Old;
 extern int IIC_Address;
@@ -18,7 +19,6 @@ char *Playlistbmp = "./pic/Playlist.bmp";
 char *whiteScreen = "./pic/White_board.bmp";
 
 UBYTE PlayBackBar = 0; // Playback bar at the bottom of the screen 1=visible, 0=not visible
-UBYTE Page = 0;
 UBYTE ReFlag = 0;
 
 /******************************************************************************
@@ -119,15 +119,20 @@ void PrintMainMenu(){
 /******************************************************************************
 function: Draw the song menu
 ******************************************************************************/
-void PrintSongMenu(){
+void PrintSongMenu(const MusicLibrary *lib, int scroll){
 	
     Clear(WHITE);
 
 	DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK); 
 
-	for ( int i = 0; i < 20; i++ ) { 
-		DrawString_EN(10, 20 + i*20, "9876543210ABCDEFH" + i, &Font20, WHITE, BLACK); 
-	} 
+	int start = scroll * 10;
+	int end = start + 15;
+	if(end > lib->count) end = lib->count;
+
+	for (int i = start; i < end; i++) {
+		int y = 30 + (i - start) * 20; // start below header
+		DrawString_EN(10, y, lib->songs[i].title, &Font20, WHITE, BLACK);
+	}
 	
 	if ( PlayBackBar == 1 ) { 
 		PlayBackBarBottom("Current Song", 380, 50); 
@@ -139,15 +144,53 @@ void PrintSongMenu(){
 /******************************************************************************
 function: Draw the Album menu
 ******************************************************************************/
-void PrintAlbumMenu(){
-	
+void PrintAlbumMenu(const MusicLibrary *lib, int scroll) {
     Clear(WHITE);
 
-	DrawString_EN(1, 1, "Albums", &Font24, WHITE, BLACK); 
+    DrawString_EN(1, 1, "Albums", &Font24, WHITE, BLACK);
 
-	GUI_ReadBmp(Albumsbmp, 40, 80);
+    // Temporary storage for unique albums
+    char albums[512][FIELD_SIZE];  // adjust size if needed
+    char artists[512][FIELD_SIZE]; // parallel array for artist
+    int album_count = 0;
 
+    // Collect unique albums
+    for (size_t i = 0; i < lib->count; i++) {
+        bool seen = false;
+        for (int j = 0; j < album_count; j++) {
+            if (strcmp(lib->songs[i].album, albums[j]) == 0 &&
+                strcmp(lib->songs[i].artist, artists[j]) == 0) {
+                seen = true;
+                break;
+            }
+        }
+        if (!seen && album_count < 512) {
+            strncpy(albums[album_count], lib->songs[i].album, FIELD_SIZE - 1);
+            albums[album_count][FIELD_SIZE - 1] = '\0';
+            strncpy(artists[album_count], lib->songs[i].artist, FIELD_SIZE - 1);
+            artists[album_count][FIELD_SIZE - 1] = '\0';
+            album_count++;
+        }
+    }
+
+    // Pagination logic
+    int start = scroll * 10;
+    int end = start + 15;
+    if (end > album_count) end = album_count;
+
+    // Draw albums
+    for (int i = start; i < end; i++) {
+        int y = 30 + (i - start) * 20; // start below header
+        char buf[FIELD_SIZE * 2];
+        snprintf(buf, sizeof(buf), "%s (%s)", albums[i], artists[i]);
+        DrawString_EN(10, y, buf, &Font20, WHITE, BLACK);
+    }
+
+    if (PlayBackBar == 1) {
+        PlayBackBarBottom("Current Album", 380, 50);
+    }
 }
+
 //*****************************************************************************/
 
 /******************************************************************************
@@ -225,61 +268,56 @@ int ScreenSetup() {
 //*****************************************************************************/
 
 /******************************************************************************
-function: This updates the screen if needed
+function: This updates the page select in the main menu
 ******************************************************************************/
-int UpdateScreen()
+int ChechMenu(int Page)
 {
 	
-	if(ICNT_Scan()==1 || (ICNT86_Dev_Now.X[0] == ICNT86_Dev_Old.X[0] && ICNT86_Dev_Now.Y[0] == ICNT86_Dev_Old.Y[0])) {
-		return 0;	// No update needed
+	if(ICNT_Scan()==1 || (ICNT86_Dev_Now.X[0] == ICNT86_Dev_Old.X[0] && 
+						  ICNT86_Dev_Now.Y[0] == ICNT86_Dev_Old.Y[0])) {
+		return Page;	// No update needed
 	}
 
-	int oldPage = Page;
-
 	// Check touches and update Page
-	if(Page == 0) { 
+	if(Page == 0) { // If it's in the main menu
 		if(ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
 		else if(ICNT86_Dev_Now.X[0] > 80 && ICNT86_Dev_Now.X[0] < 140) Page = 2;
 		else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
 		else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
-	} else if(Page >= 1 && Page <= 4) {
-		if(ICNT86_Dev_Now.X[0] > 210 && ICNT86_Dev_Now.X[0] < 280) Page = 0;
-		else if(ICNT86_Dev_Now.X[0] > 0 && ICNT86_Dev_Now.X[0] < 80 && PlayBackBar == 1) {
-			PlayBackBar = 0;
-			ReFlag = 1;
-		}
-		else if(ICNT86_Dev_Now.X[0] > 0 && ICNT86_Dev_Now.X[0] < 80 && PlayBackBar == 0) {
-			PlayBackBar = 1;
-			ReFlag = 1;
-		}
 	}
 
-	// Redraw only if page changed
-	if(Page != oldPage) {
-		ReFlag = 1;
-	}
+	// Update old touch
+	ICNT86_Dev_Old.X[0] = ICNT86_Dev_Now.X[0];
+	ICNT86_Dev_Old.Y[0] = ICNT86_Dev_Now.Y[0];
 
-	if(ReFlag) {
-		switch(Page) {
-			case 0:
-				PrintMainMenu();
-				break;
-			case 1:	
-				PrintSongMenu();
-				break;
-			case 2:
-				PrintAlbumMenu();
-				break;
-			case 3:
-				PrintArtistMenu();
-				break;
-			case 4:
-				PrintPlaylisttMenu();
-				break;
-		}
-		EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
-		ReFlag = 0;
+	return Page; // return page selected (0 means staying in the main menu)
+}
+//*****************************************************************************/
+
+/******************************************************************************
+function: This updates the screen if needed
+******************************************************************************/
+int UpdateScreen(const MusicLibrary *lib, int scroll, int Page)
+{
+
+	switch(Page) {
+		case 0:
+			PrintMainMenu();
+			break;
+		case 1:	
+			PrintSongMenu(lib, scroll);
+			break;
+		case 2:
+			PrintAlbumMenu();
+			break;
+		case 3:
+			PrintArtistMenu();
+			break;
+		case 4:
+			PrintPlaylisttMenu();
+			break;
 	}
+	EPD_2IN9_V2_Display_Partial_Wait(BlackImage);
 
 	// Update old touch
 	ICNT86_Dev_Old.X[0] = ICNT86_Dev_Now.X[0];
