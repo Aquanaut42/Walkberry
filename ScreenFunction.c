@@ -273,47 +273,83 @@ int compare_songentry(const void *a, const void *b) {
 }
 
 void PrintSongMenu(const MusicLibrary *lib, int scroll){
-	
-    Clear(WHITE);
-	if (lib == NULL) return;
-    if (lib->songs == NULL) return;
 
-	SongEntry album_songs[512]; // Temporary storage for songs
-	int song_count = 0;
+    Clear(WHITE);
+
+    if (lib == NULL) {
+        printf("ERROR: lib is NULL\n");
+        return;
+    }
+    if (lib->songs == NULL) {
+        printf("ERROR: lib->songs is NULL\n");
+        return;
+    }
+
+    printf("Song count: %zu\n", lib->count);
+
+    SongEntry album_songs[512]; // Temporary storage for songs
+    int song_count = 0;
 
     if (current_album[0] == '\0') { // if no album selected, show all songs
 
-		// print "Songs" as header
-        DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK); 
+        // print "Songs" as header
+        DrawString_EN(1, 1, "Songs", &Font24, WHITE, BLACK);
 
-		// collect all songs
-		for (size_t i = 0; i < lib->count; i++) {
-			if ( lib->songs[i].album ) { // skip songs with no album (should not happen)
-				album_songs[song_count].title = lib->songs[i].title ? lib->songs[i].title : "(untitled)"; // parse the title (plus safe check)
-				album_songs[song_count].track_no = parse_track_number(album_songs[song_count].title); // parse track number
-				song_count++;
-			}
-		}
+        // collect all songs with SAFE CHECKS
+        for (size_t i = 0; i < lib->count && song_count < 512; i++) {
+            // SAFETY CHECK: Make sure album exists
+            if (lib->songs[i].album == NULL || lib->songs[i].album[0] == '\0') {
+                printf("Skipping song %zu: no album\n", i);
+                continue;
+            }
 
-    } else {	// If an album is selected, show songs from that album only
-		
-		// Print the album name as header
-		char header[FIELD_SIZE * 2];
-		snprintf(header, sizeof(header), "%s", current_album);
-		DrawString_EN(1, 1, header, &Font24, WHITE, BLACK); 
+            // SAFETY CHECK: Make sure title exists
+            if (lib->songs[i].title == NULL || lib->songs[i].title[0] == '\0') {
+                printf("Skipping song %zu: no title\n", i);
+                continue;
+            }
 
-		// collect songs from current_album
-		for (size_t i = 0; i < lib->count; i++) {
-			if (lib->songs[i].album && strcmp(lib->songs[i].album, current_album) == 0) { // skip songs that aren't in the current_album and has no album (should not happen)
-				album_songs[song_count].title = lib->songs[i].title ? lib->songs[i].title : "(untitled)"; // parse the title (plus safe check)
-				album_songs[song_count].track_no = parse_track_number(album_songs[song_count].title); // parse track number
-				song_count++;
-			}
-		}
-		
-	}
+            //printf("Adding song %zu: %s\n", i, lib->songs[i].title);
 
-	qsort(album_songs, song_count, sizeof(SongEntry), compare_songentry); // sort by track number
+            album_songs[song_count].title = lib->songs[i].title;
+            album_songs[song_count].track_no = parse_track_number(lib->songs[i].title);
+            song_count++;
+        }
+
+        printf("Printing song menu (collected %d songs).\r\n", song_count);
+
+    } else { // If an album is selected, show songs from that album only
+
+        // Print the album name as header
+        char header[FIELD_SIZE * 2];
+        snprintf(header, sizeof(header), "%s", current_album);
+        DrawString_EN(1, 1, header, &Font24, WHITE, BLACK);
+
+        // collect songs from current_album with SAFE CHECKS
+        for (size_t i = 0; i < lib->count && song_count < 512; i++) {
+            // SAFETY CHECK: album exists and matches
+            if (lib->songs[i].album == NULL || lib->songs[i].album[0] == '\0') {
+                continue;
+            }
+
+            if (strcmp(lib->songs[i].album, current_album) != 0) {
+                continue;
+            }
+
+            // SAFETY CHECK: title exists
+            if (lib->songs[i].title == NULL || lib->songs[i].title[0] == '\0') {
+                continue;
+            }
+
+            album_songs[song_count].title = lib->songs[i].title;
+            album_songs[song_count].track_no = parse_track_number(lib->songs[i].title);
+            song_count++;
+        }
+    }
+
+    if (song_count > 0) {
+        qsort(album_songs, song_count, sizeof(SongEntry), compare_songentry);
+    }
 
     // Pagination logic (rows per page = 10)
     int rows_per_page = 10;
@@ -321,24 +357,34 @@ void PrintSongMenu(const MusicLibrary *lib, int scroll){
     int end_index = start_index + rows_per_page;
     if (end_index > song_count) end_index = song_count;
 
-    if (song_count == 0) { // nothing to draw, placeholder
-    	DrawString_EN(10, 30, "(no songs)", &Font20, WHITE, BLACK);
-	} else { // draw each song title
-		for (int i = start_index; i < end_index; i++) {
+    if (song_count == 0) {
+        DrawString_EN(10, 30, "(no songs)", &Font20, WHITE, BLACK);
+    } else {
+        for (int i = start_index; i < end_index; i++) {
+            int y = 30 + (i - start_index) * 20;
+            const char *title = album_songs[i].title;
 
-			int y = 30 + (i - start_index) * 20;
-			const char *title = album_songs[i].title;
-			if (title && strlen(title) > 3) {
-				title += 3; // skip first 3 characters
-			}
-			DrawString_EN(10, y, title, &Font20, WHITE, BLACK);
-		}
-	}
+            // SAFETY CHECK: title still valid
+            if (title == NULL || title[0] == '\0') {
+                DrawString_EN(10, y, "(untitled)", &Font20, WHITE, BLACK);
+                continue;
+            }
 
-	// The playback bar at the bottom of the screen
-	if ( PlayBackBar == 1 ) { 
-		PlayBackBarBottom("Current Song", 380, 50); 
-	}
+            // Skip first 3 characters if long enough
+            if (strlen(title) > 3) {
+                title += 3;
+            }
+
+            DrawString_EN(10, y, title, &Font20, WHITE, BLACK);
+        }
+    }
+
+    // The playback bar at the bottom of the screen
+    if (PlayBackBar == 1) {
+        PlayBackBarBottom("Current Song", 380, 50);
+    }
+
+    printf("Printing song menu5 (done).\r\n");
 }
 //****************************************************************************/
 
@@ -584,13 +630,13 @@ int ChechMenu(const MusicLibrary *lib, int scroll, int Page)
 	// Check touches and update Page
 	switch(Page) {
 		case 0: // If it's in the main menu
-			if(ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
+			if     (ICNT86_Dev_Now.X[0] > 10 && ICNT86_Dev_Now.X[0] < 70) Page = 1;
 			else if(ICNT86_Dev_Now.X[0] > 80 && ICNT86_Dev_Now.X[0] < 140) Page = 2;
 			else if(ICNT86_Dev_Now.X[0] > 150 && ICNT86_Dev_Now.X[0] < 210) Page = 3;
 			else if(ICNT86_Dev_Now.X[0] > 220 && ICNT86_Dev_Now.X[0] < 280) Page = 4;
 			break;
-		case 1:	
-			//PrintSongMenu(lib, scroll);
+		case 1:
+			PrintSongMenu(lib, scroll);
 			break;
 		case 2: // Album menu
 			CheckAlbumMenu(lib, scroll);

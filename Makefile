@@ -21,13 +21,13 @@ USELIB = USE_GPIOD_LIB
 DEBUG = -D $(USELIB)
 
 ifeq ($(USELIB), USE_BCM2835_LIB)
-    LIB = -lbcm2835 -lm 
+    LIB = -lbcm2835 -lm
 	OBJ_O := $(filter-out ${DIR_BIN}/RPI_gpiod.o ${DIR_BIN}/dev_hardware_SPI.o ${DIR_BIN}/dev_hardware_i2c.o, ${OBJ_O})
 else ifeq ($(USELIB), USE_WIRINGPI_LIB)
-    LIB = -lwiringPi -lm 
+    LIB = -lwiringPi -lm
 	OBJ_O := $(filter-out ${DIR_BIN}/RPI_gpiod.o ${DIR_BIN}/dev_hardware_SPI.o ${DIR_BIN}/dev_hardware_i2c.o, ${OBJ_O})
 else ifeq ($(USELIB), USE_LGPIO_LIB)
-	LIB += -llgpio -lm 
+	LIB += -llgpio -lm
 	OBJ_O := $(filter-out ${DIR_BIN}/RPI_gpiod.o ${DIR_BIN}/dev_hardware_SPI.o ${DIR_BIN}/dev_hardware_i2c.o, ${OBJ_O})
 else ifeq ($(USELIB), USE_GPIOD_LIB)
     LIB = -lgpiod -lm
@@ -40,24 +40,24 @@ CFLAGS += $(MSG) $(DEBUG)
 
 ${TARGET}:${OBJ_O}
 	$(CC) $(CFLAGS) $(OBJ_O) -o $@ $(LIB)
-    
+
 $(shell mkdir -p $(DIR_BIN))
 
 ${DIR_BIN}/%.o:$(DIR_Examples)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Driver)  -I $(DIR_EPD) -I $(DIR_Draw) -I $(DIR_GUI)
-    
+
 ${DIR_BIN}/%.o:$(DIR_Driver)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
 
 ${DIR_BIN}/%.o:$(DIR_EPD)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
-    
-${DIR_BIN}/%.o:$(DIR_FONTS)/%.c 
+
+${DIR_BIN}/%.o:$(DIR_FONTS)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) $(DEBUG)
-	
+
 ${DIR_BIN}/%.o:$(DIR_GUI)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Config) -I $(DIR_Draw) $(DEBUG)
-	
+
 ${DIR_BIN}/%.o:$(DIR_Config)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) $(LIB)
 
@@ -65,7 +65,7 @@ ${DIR_BIN}/%.o:$(DIR_Draw)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_MusicControl) -I $(DIR_Draw) -I $(DIR_Config) -I $(DIR_GUI) -I $(DIR_EPD) -I $(DIR_Driver)
 
 
-	
+
 clean :
-	rm $(DIR_BIN)/*.* 
-	rm $(TARGET) 
+	rm $(DIR_BIN)/*.*
+	rm $(TARGET)
